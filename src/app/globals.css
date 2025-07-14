@@ -1,33 +1,21 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Montserrat', 'Helvetica', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+body {
+  color: #6e6b7b;
+  background: #f8f8f8;
 }
 
 a {
@@ -35,8 +23,183 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+/* Custom scrollbar - DattaAble style */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Focus styles - DattaAble style */
+*:focus {
+  outline: 2px solid #7367f0;
+  outline-offset: 2px;
+}
+
+/* Selection styles - DattaAble style */
+::selection {
+  background-color: #7367f0;
+  color: white;
+}
+
+/* Smooth transitions */
+* {
+  transition: all 0.3s ease;
+}
+
+/* Custom button styles */
+button {
+  font-family: inherit;
+}
+
+/* Custom input styles */
+input, textarea, select {
+  font-family: inherit;
+}
+
+/* Loading animation - DattaAble style */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
   }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Card hover effects - DattaAble style */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Gradient text - DattaAble style */
+.gradient-text {
+  background: linear-gradient(135deg, #7367f0 0%, #9c8cfc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* DattaAble specific styles */
+.datta-card {
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 4px 24px 0 rgba(34, 41, 47, 0.24);
+  border: 1px solid #ebe9f1;
+  transition: all 0.3s ease;
+}
+
+.datta-card:hover {
+  box-shadow: 0 4px 25px 0 rgba(34, 41, 47, 0.24);
+  transform: translateY(-2px);
+}
+
+.datta-button {
+  background: #7367f0;
+  color: white;
+  border-radius: 6px;
+  padding: 8px 16px;
+  border: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.datta-button:hover {
+  background: #5e50ee;
+  transform: translateY(-1px);
+}
+
+.datta-input {
+  border: 1px solid #d8d6de;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.datta-input:focus {
+  border-color: #7367f0;
+  box-shadow: 0 0 0 0.2rem rgba(115, 103, 240, 0.25);
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Dark mode support */
+[data-mui-color-scheme="dark"] {
+  background: #161d31;
+  color: #d0d2d6;
+}
+
+[data-mui-color-scheme="dark"] .datta-card {
+  background: #283046;
+  border-color: #3b4253;
+}
+
+[data-mui-color-scheme="dark"] .datta-input {
+  background: #283046;
+  border-color: #3b4253;
+  color: #d0d2d6;
 }
