@@ -37,6 +37,7 @@ interface Product {
   inch?: number;
   video?: string;
   videoThumbnail?: string;
+  quantity?: number;
 }
 
 interface Option { _id: string; name: string; }
@@ -102,6 +103,7 @@ export default function ProductPage() {
     image1?: File | string;
     image2?: File | string;
     video?: File | string;
+    quantity?: string;
     [key: string]: string | File | undefined;
   }>({
     name: "",
@@ -125,6 +127,7 @@ export default function ProductPage() {
     image1: undefined,
     image2: undefined,
     video: undefined,
+    quantity: "",
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -230,6 +233,7 @@ export default function ProductPage() {
       image1: product.image1,
       image2: product.image2,
       video: product.video,
+      quantity: product.quantity?.toString() || "",
     } : {
       name: "",
       category: "",
@@ -252,6 +256,7 @@ export default function ProductPage() {
       image1: undefined,
       image2: undefined,
       video: undefined,
+      quantity: "",
     });
     setImagePreview(product?.img ? getImageUrl(product.img) || null : null);
     setImage1Preview(product?.image1 ? getImageUrl(product.image1) || null : null);
@@ -289,6 +294,7 @@ export default function ProductPage() {
       image1: undefined,
       image2: undefined,
       video: undefined,
+      quantity: "",
     });
   }, []);
 
@@ -347,29 +353,23 @@ export default function ProductPage() {
     setSubmitting(true);
     try {
       const formData = new FormData();
+      // Append all text fields first
+      Object.keys(form).forEach(key => {
+        if (!["img", "image1", "image2", "video"].includes(key) && form[key] !== undefined && form[key] !== "") {
+          formData.append(key, form[key] as string);
+        }
+      });
+      // Then append files
       if (form.img) formData.append("file", form.img as File);
       if (form.image1) formData.append("image1", form.image1 as File);
       if (form.image2) formData.append("image2", form.image2 as File);
       if (form.video) formData.append("video", form.video as File);
-      Object.keys(form).forEach(key => {
-        if (["img", "image1", "image2", "video"].includes(key)) return; // already appended
-        if (form[key] !== undefined && form[key] !== "") {
-          if (form[key] instanceof File) {
-            formData.append(key, form[key] as File);
-          } else {
-            formData.append(key, form[key] as string);
-          }
-        }
-      });
-
       const url = editId ? `${API_URL}/product/${editId}` : `${API_URL}/product`;
       const method = editId ? "PUT" : "POST";
-
       const res = await fetch(url, {
         method,
         body: formData,
       });
-
       if (res.ok) {
         handleClose();
         fetchProducts();
@@ -444,6 +444,7 @@ export default function ProductPage() {
         image1: selected.image1,
         image2: selected.image2,
         video: selected.video,
+        quantity: selected.quantity?.toString() || "",
       });
       setImagePreview(selected.img ? getImageUrl(selected.img) || null : null);
       setImage1Preview(selected.image1 ? getImageUrl(selected.image1) || null : null);
@@ -602,6 +603,9 @@ export default function ProductPage() {
                     Color
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#2c3e50', fontSize: '14px' }}>
+                    Quantity
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#2c3e50', fontSize: '14px' }}>
                     Actions
                   </TableCell>
                 </TableRow>
@@ -645,6 +649,9 @@ export default function ProductPage() {
                         size="small"
                         sx={{ bgcolor: '#fef2f2', color: '#e74c3c', fontWeight: 500 }}
                       />
+                    </TableCell>
+                    <TableCell>
+                      {product.quantity ?? '-'}
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', gap: 1 }}>
@@ -804,6 +811,15 @@ export default function ProductPage() {
               value={form.inch || ""}
               fullWidth
               disabled
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+            />
+            <TextField
+              label="Quantity"
+              type="number"
+              value={form.quantity || ""}
+              onChange={e => setForm(prev => ({ ...prev, quantity: e.target.value }))}
+              fullWidth
+              disabled={pageAccess === 'view'}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
             <Box>
@@ -1130,6 +1146,10 @@ export default function ProductPage() {
                 <Box>
                   <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>INCH</Typography>
                   <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{selectedProduct.inch || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>Quantity</Typography>
+                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{selectedProduct.quantity ?? '-'}</Typography>
                 </Box>
               </Box>
             </Box>

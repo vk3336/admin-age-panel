@@ -382,6 +382,8 @@ function SeoPage() {
                 );
               }
               if (!field.key) return null;
+              // Only use field.key as an index if it's defined
+              const value = field.key ? field.key.split('.').reduce((acc, k) => acc && acc[k], form) || "" : "";
               if (field.type === "select") {
                 // Product field: use products list, no freeSolo
                 return (
@@ -404,7 +406,7 @@ function SeoPage() {
                       <TextField {...params} label={field.label} name={field.key} required disabled={pageAccess === 'view'} />
                     )}
                     renderOption={(props, option) => (
-                      <ListItem {...props} key={option.value}>
+                      <ListItem {...props} key={option.value || option.label}>
                         <ListItemAvatar>
                           <Avatar src={option.img ? (option.img.startsWith('http') ? option.img : `${API_URL}/images/${option.img}`) : undefined}>
                             {option.label[0]}
@@ -477,7 +479,7 @@ function SeoPage() {
         <DialogTitle sx={{ fontWeight: 900, fontSize: 28 }}>SEO Details</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           {selectedSeo && (
-            <Box display="flex" flexDirection="column" gap={3}>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={3}>
               <Box display="flex" alignItems="center" gap={3} mb={2}>
                 <Box>
                   <Avatar

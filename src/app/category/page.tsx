@@ -47,84 +47,101 @@ const CategoryRow = React.memo(({ category, onEdit, onDelete, viewOnly }: {
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
   viewOnly: boolean;
-}) => (
-  <TableRow hover sx={{ 
-    transition: 'all 0.3s ease', 
-    '&:hover': { 
-      backgroundColor: 'rgba(115, 103, 240, 0.08)',
-      transform: 'translateY(-1px)',
-    } 
-  }}>
-    <TableCell sx={{ 
-      fontSize: 14, 
-      fontWeight: 500, 
-      color: 'text.primary',
-      borderBottom: '1px solid',
-      borderColor: 'divider'
+}) => {
+  const [imgDim, setImgDim] = React.useState<{ width: number; height: number } | null>(null);
+
+  return (
+    <TableRow hover sx={{ 
+      transition: 'all 0.3s ease', 
+      '&:hover': { 
+        backgroundColor: 'rgba(115, 103, 240, 0.08)',
+        transform: 'translateY(-1px)',
+      } 
     }}>
-      {category.name}
-    </TableCell>
-    <TableCell sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-      {category.image ? (
-        <Avatar 
-          variant="rounded" 
-          src={category.image} 
-          sx={{ 
-            width: 40, 
-            height: 40,
-            border: '2px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <ImageIcon />
-        </Avatar>
-      ) : (
-        <Avatar 
-          variant="rounded" 
-          sx={{ 
-            width: 40, 
-            height: 40, 
-            bgcolor: 'grey.200',
-            border: '2px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <ImageIcon />
-        </Avatar>
-      )}
-    </TableCell>
-    <TableCell sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <IconButton 
-          size="small" 
-          onClick={() => onEdit(category)}
-          sx={{ 
-            color: 'primary.main',
-            '&:hover': {
-              backgroundColor: 'rgba(115, 103, 240, 0.08)',
-            }
-          }}
-          disabled={viewOnly}
-        >
-          <EditIcon fontSize="small" />
-        </IconButton>
-        <IconButton 
-          size="small" 
-          onClick={() => onDelete(category._id || "")}
-          sx={{ 
-            color: 'error.main',
-            '&:hover': {
-              backgroundColor: 'rgba(234, 84, 85, 0.08)',
-            }
-          }}
-          disabled={viewOnly}
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      </Box>
-    </TableCell>
-  </TableRow>
-));
+      <TableCell sx={{ 
+        fontSize: 14, 
+        fontWeight: 500, 
+        color: 'text.primary',
+        borderBottom: '1px solid',
+        borderColor: 'divider'
+      }}>
+        {category.name}
+      </TableCell>
+      <TableCell sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+        {category.image ? (
+          <Box>
+            <Avatar 
+              variant="rounded" 
+              src={category.image} 
+              sx={{ 
+                width: 40, 
+                height: 40,
+                border: '2px solid',
+                borderColor: 'divider'
+              }}
+              imgProps={{
+                onLoad: (e: React.SyntheticEvent<HTMLImageElement>) => {
+                  const { width, height } = e.currentTarget;
+                  setImgDim({ width, height });
+                }
+              }}
+            >
+              <ImageIcon />
+            </Avatar>
+            {imgDim && (
+              <Typography variant="caption" sx={{ display: "block", mt: 0.5, textAlign: "center" }}>
+                {imgDim.width}×{imgDim.height}
+              </Typography>
+            )}
+          </Box>
+        ) : (
+          <Avatar 
+            variant="rounded" 
+            sx={{ 
+              width: 40, 
+              height: 40, 
+              bgcolor: 'grey.200',
+              border: '2px solid',
+              borderColor: 'divider'
+            }}
+          >
+            <ImageIcon />
+          </Avatar>
+        )}
+      </TableCell>
+      <TableCell sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton 
+            size="small" 
+            onClick={() => onEdit(category)}
+            sx={{ 
+              color: 'primary.main',
+              '&:hover': {
+                backgroundColor: 'rgba(115, 103, 240, 0.08)',
+              }
+            }}
+            disabled={viewOnly}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton 
+            size="small" 
+            onClick={() => onDelete(category._id || "")}
+            sx={{ 
+              color: 'error.main',
+              '&:hover': {
+                backgroundColor: 'rgba(234, 84, 85, 0.08)',
+              }
+            }}
+            disabled={viewOnly}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </TableCell>
+    </TableRow>
+  );
+});
 
 CategoryRow.displayName = 'CategoryRow';
 

@@ -217,6 +217,7 @@ export default function VendorPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
+  const [allowed, setAllowed] = useState(false);
 
 
   const fetchVendors = useCallback(async () => {

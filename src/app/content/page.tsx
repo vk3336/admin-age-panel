@@ -145,6 +145,7 @@ export default function ContentPage() {
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
   const [error, setError] = useState("");
+  const [allowed, setAllowed] = useState(false);
 
 
   const fetchContents = useCallback(async () => {

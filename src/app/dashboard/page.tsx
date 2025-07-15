@@ -87,13 +87,13 @@ const StatCard = React.memo(({ title, value, subtitle, icon, color, trend, trend
     }}>
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-          <Box sx={{
+            <Box sx={{ 
             width: 64,
             height: 64,
             borderRadius: '50%',
             background: `radial-gradient(circle at 60% 40%, ${color} 60%, #fff 100%)`,
-            display: 'flex',
-            alignItems: 'center',
+              display: 'flex', 
+              alignItems: 'center', 
             justifyContent: 'center',
             boxShadow: `0 2px 12px 0 ${color}33`,
             position: 'relative',
