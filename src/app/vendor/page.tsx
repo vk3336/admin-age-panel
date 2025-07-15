@@ -296,7 +296,7 @@ export default function VendorPage() {
       setDeleteId(null);
       fetchVendors();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchVendors]);
 

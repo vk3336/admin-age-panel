@@ -323,7 +323,7 @@ export default function SubsuitablePage() {
       setDeleteId(null);
       fetchSubsuitables();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchSubsuitables]);
 

@@ -28,6 +28,13 @@ interface Product {
   vendor: string;
   groupcode: string;
   color: string;
+  motif?: string;
+  um?: string;
+  currency?: string;
+  gsm?: number;
+  oz?: number;
+  cm?: number;
+  inch?: number;
   video?: string;
   videoThumbnail?: string;
 }
@@ -84,6 +91,13 @@ export default function ProductPage() {
     vendor: string;
     groupcode: string;
     color: string;
+    motif?: string;
+    um?: string;
+    currency?: string;
+    gsm?: string;
+    oz?: string;
+    cm?: string;
+    inch?: string;
     img?: File | string;
     image1?: File | string;
     image2?: File | string;
@@ -100,6 +114,13 @@ export default function ProductPage() {
     vendor: "",
     groupcode: "",
     color: "",
+    motif: "",
+    um: "",
+    currency: "",
+    gsm: "",
+    oz: "",
+    cm: "",
+    inch: "",
     img: undefined,
     image1: undefined,
     image2: undefined,
@@ -128,12 +149,16 @@ export default function ProductPage() {
     { key: "vendor", label: "Vendor" },
     { key: "groupcode", label: "Groupcode" },
     { key: "color", label: "Color" },
+    { key: "motif", label: "Motif" },
   ], []);
   const [viewOnly, setViewOnly] = useState<boolean>(false);
   // Add state for image dimensions
   const [imgDims, setImgDims] = useState<{img?: [number, number], image1?: [number, number], image2?: [number, number]}>({});
   // Add state for video dimensions
   const [videoDims, setVideoDims] = useState<[number, number] | undefined>(undefined);
+
+  const umOptions: string[] = ["KG", "Yard", "Meter"];
+  const currencyOptions: string[] = ["INR", "USD", "EUR", "GBP", "JPY", "CNY", "CAD", "AUD", "SGD", "CHF", "ZAR", "RUB", "BRL", "HKD", "NZD", "KRW", "THB", "MYR", "IDR", "PHP", "VND", "TRY", "SAR", "AED", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "ILS", "MXN", "TWD", "ARS", "CLP", "COP", "PEN", "EGP", "PKR", "BDT", "LKR", "NPR", "KES", "NGN", "GHS", "UAH", "QAR", "OMR", "KWD", "BHD", "JOD", "MAD", "DZD", "TND", "LBP", "IQD", "IRR", "AFN", "MNT", "UZS", "KZT", "AZN", "GEL", "BYN", "MDL", "ALL", "MKD", "BAM", "HRK", "RSD", "BGN", "RON", "ISK"];
 
   const fetchDropdowns = useCallback(async () => {
     setDropdownLoading(true);
@@ -194,6 +219,13 @@ export default function ProductPage() {
       vendor: getId(product.vendor),
       groupcode: getId(product.groupcode),
       color: getId(product.color),
+      motif: getId(product.motif),
+      um: getId(product.um),
+      currency: getId(product.currency),
+      gsm: getId(product.gsm),
+      oz: getId(product.oz),
+      cm: getId(product.cm),
+      inch: getId(product.inch),
       img: product.img,
       image1: product.image1,
       image2: product.image2,
@@ -209,6 +241,13 @@ export default function ProductPage() {
       vendor: "",
       groupcode: "",
       color: "",
+      motif: "",
+      um: "",
+      currency: "",
+      gsm: "",
+      oz: "",
+      cm: "",
+      inch: "",
       img: undefined,
       image1: undefined,
       image2: undefined,
@@ -239,6 +278,13 @@ export default function ProductPage() {
       vendor: "",
       groupcode: "",
       color: "",
+      motif: "",
+      um: "",
+      currency: "",
+      gsm: "",
+      oz: "",
+      cm: "",
+      inch: "",
       img: undefined,
       image1: undefined,
       image2: undefined,
@@ -315,10 +361,6 @@ export default function ProductPage() {
           }
         }
       });
-      // Debug: log all FormData keys and values
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
 
       const url = editId ? `${API_URL}/product/${editId}` : `${API_URL}/product`;
       const method = editId ? "PUT" : "POST";
@@ -391,6 +433,13 @@ export default function ProductPage() {
         vendor: getId(selected.vendor),
         groupcode: getId(selected.groupcode),
         color: getId(selected.color),
+        motif: getId(selected.motif),
+        um: getId(selected.um),
+        currency: getId(selected.currency),
+        gsm: getId(selected.gsm),
+        oz: getId(selected.oz),
+        cm: getId(selected.cm),
+        inch: getId(selected.inch),
         img: selected.img,
         image1: selected.image1,
         image2: selected.image2,
@@ -405,6 +454,24 @@ export default function ProductPage() {
       setForm(prev => ({ ...prev, name: value.label }));
     }
   };
+
+  // Add effect to auto-calculate oz and inch
+  useEffect(() => {
+    if (form.gsm && !isNaN(Number(form.gsm))) {
+      const oz = (Number(form.gsm) / 33.906).toFixed(2);
+      setForm(prev => ({ ...prev, oz }));
+    } else {
+      setForm(prev => ({ ...prev, oz: "" }));
+    }
+  }, [form.gsm]);
+  useEffect(() => {
+    if (form.cm && !isNaN(Number(form.cm))) {
+      const inch = (Number(form.cm) / 2.54).toFixed(2);
+      setForm(prev => ({ ...prev, inch }));
+    } else {
+      setForm(prev => ({ ...prev, inch: "" }));
+    }
+  }, [form.cm]);
 
   if (pageAccess === 'denied') {
     return (
@@ -681,6 +748,64 @@ export default function ProductPage() {
               </FormControl>
             ))}
             
+            <FormControl fullWidth required>
+              <InputLabel>UM</InputLabel>
+              <Select
+                value={form.um || ""}
+                onChange={e => setForm(prev => ({ ...prev, um: e.target.value }))}
+                label="UM"
+                sx={{ borderRadius: '8px' }}
+                disabled={pageAccess === 'view'}
+              >
+                {umOptions.map(opt => (
+                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Autocomplete
+              freeSolo
+              options={currencyOptions}
+              value={form.currency || ""}
+              onInputChange={(_, value) => setForm(prev => ({ ...prev, currency: value }))}
+              renderInput={(params) => (
+                <TextField {...params} label="Currency" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} disabled={pageAccess === 'view'} />
+              )}
+              disabled={pageAccess === 'view'}
+            />
+            <TextField
+              label="GSM"
+              type="number"
+              value={form.gsm || ""}
+              onChange={e => setForm(prev => ({ ...prev, gsm: e.target.value }))}
+              fullWidth
+              disabled={pageAccess === 'view'}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+            />
+            <TextField
+              label="OZ"
+              type="number"
+              value={form.oz || ""}
+              fullWidth
+              disabled
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+            />
+            <TextField
+              label="CM"
+              type="number"
+              value={form.cm || ""}
+              onChange={e => setForm(prev => ({ ...prev, cm: e.target.value }))}
+              fullWidth
+              disabled={pageAccess === 'view'}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+            />
+            <TextField
+              label="INCH"
+              type="number"
+              value={form.inch || ""}
+              fullWidth
+              disabled
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+            />
             <Box>
               <input
                 type="file"
@@ -964,8 +1089,8 @@ export default function ProductPage() {
                 </Typography>
               </Box>
               {/* Details grid */}
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
-                {dropdownFields.map((field) => (
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+                {dropdownFields.filter(field => field.key !== 'motif').map((field) => (
                   <Box key={field.key}>
                     <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>
                       {field.label}
@@ -977,6 +1102,35 @@ export default function ProductPage() {
                     </Typography>
                   </Box>
                 ))}
+                {/* Motif and new fields */}
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>Motif</Typography>
+                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{typeof selectedProduct.motif === 'object' ? selectedProduct.motif?.name : selectedProduct.motif || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>UM</Typography>
+                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{selectedProduct.um || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>Currency</Typography>
+                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{selectedProduct.currency || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>GSM</Typography>
+                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{selectedProduct.gsm || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>OZ</Typography>
+                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{selectedProduct.oz || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>CM</Typography>
+                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{selectedProduct.cm || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>INCH</Typography>
+                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{selectedProduct.inch || '-'}</Typography>
+                </Box>
               </Box>
             </Box>
           )}

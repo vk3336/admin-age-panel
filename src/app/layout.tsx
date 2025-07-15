@@ -118,6 +118,7 @@ const filterModels = [
   { name: "Design", path: "/design" },
   { name: "Finish", path: "/finish" },
   { name: "Groupcode", path: "/groupcode" },
+  { name: "Motif", path: "/motif" },
   { name: "Structure", path: "/structure" },
   { name: "Subfinish", path: "/subfinish" },
   { name: "Substructure", path: "/substructure" },
@@ -430,7 +431,7 @@ const Sidebar = React.memo(() => {
               py: 1.5,
               px: 2,
               transition: 'all 0.3s ease',
-              ...(pathname.startsWith('/category')||pathname.startsWith('/color')||pathname.startsWith('/content')||pathname.startsWith('/design')||pathname.startsWith('/finish')||pathname.startsWith('/groupcode')||pathname.startsWith('/structure')||pathname.startsWith('/subfinish')||pathname.startsWith('/substructure')||pathname.startsWith('/subsuitable')||pathname.startsWith('/suitablefor')||pathname.startsWith('/vendor') ? {
+              ...(pathname.startsWith('/category')||pathname.startsWith('/color')||pathname.startsWith('/content')||pathname.startsWith('/design')||pathname.startsWith('/finish')||pathname.startsWith('/groupcode')||pathname.startsWith('/structure')||pathname.startsWith('/subfinish')||pathname.startsWith('/substructure')||pathname.startsWith('/subsuitable')||pathname.startsWith('/suitablefor')||pathname.startsWith('/vendor')||pathname.startsWith('/motif') ? {
                 backgroundColor: 'primary.main',
                 color: 'white',
                 '&:hover': {
@@ -438,12 +439,12 @@ const Sidebar = React.memo(() => {
                 }
               } : {}),
               '&:hover': {
-                backgroundColor: (pathname.startsWith('/category')||pathname.startsWith('/color')||pathname.startsWith('/content')||pathname.startsWith('/design')||pathname.startsWith('/finish')||pathname.startsWith('/groupcode')||pathname.startsWith('/structure')||pathname.startsWith('/subfinish')||pathname.startsWith('/substructure')||pathname.startsWith('/subsuitable')||pathname.startsWith('/suitablefor')||pathname.startsWith('/vendor')) ? 'primary.dark' : 'action.hover',
+                backgroundColor: (pathname.startsWith('/category')||pathname.startsWith('/color')||pathname.startsWith('/content')||pathname.startsWith('/design')||pathname.startsWith('/finish')||pathname.startsWith('/groupcode')||pathname.startsWith('/structure')||pathname.startsWith('/subfinish')||pathname.startsWith('/substructure')||pathname.startsWith('/subsuitable')||pathname.startsWith('/suitablefor')||pathname.startsWith('/vendor')||pathname.startsWith('/motif')) ? 'primary.dark' : 'action.hover',
               },
             }}
           >
             <ListItemIcon sx={{ 
-              color: (pathname.startsWith('/category')||pathname.startsWith('/color')||pathname.startsWith('/content')||pathname.startsWith('/design')||pathname.startsWith('/finish')||pathname.startsWith('/groupcode')||pathname.startsWith('/structure')||pathname.startsWith('/subfinish')||pathname.startsWith('/substructure')||pathname.startsWith('/subsuitable')||pathname.startsWith('/suitablefor')||pathname.startsWith('/vendor')) ? 'white' : 'text.secondary', 
+              color: (pathname.startsWith('/category')||pathname.startsWith('/color')||pathname.startsWith('/content')||pathname.startsWith('/design')||pathname.startsWith('/finish')||pathname.startsWith('/groupcode')||pathname.startsWith('/structure')||pathname.startsWith('/subfinish')||pathname.startsWith('/substructure')||pathname.startsWith('/subsuitable')||pathname.startsWith('/suitablefor')||pathname.startsWith('/vendor')||pathname.startsWith('/motif')) ? 'white' : 'text.secondary', 
               minWidth: 0, 
               mr: 2 
             }}>

@@ -111,7 +111,7 @@ export default function FinishPage() {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish`);
       setFinishes(data.data || []);
     } catch (error) {
-      console.error("Fetch error:", error);
+      // console.error("Fetch error:", error);
     }
   }, []);
 
@@ -163,7 +163,7 @@ export default function FinishPage() {
       setDeleteId(null);
       fetchFinishes();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchFinishes]);
 

@@ -324,7 +324,7 @@ export default function SubstructurePage() {
       setDeleteId(null);
       fetchSubstructures();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchSubstructures]);
 

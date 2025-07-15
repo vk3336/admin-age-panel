@@ -449,7 +449,7 @@ export default function GroupcodePage() {
       setDeleteId(null);
       fetchGroupcodes();
     } catch (error) {
-      console.error("Delete error:", error);
+      // Optionally show user-friendly error message
     }
   }, [deleteId, fetchGroupcodes]);
 

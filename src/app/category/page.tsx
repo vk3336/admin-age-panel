@@ -382,7 +382,7 @@ export default function CategoryPage() {
       setDeleteId(null);
       fetchCategories();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchCategories]);
 

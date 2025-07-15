@@ -271,7 +271,7 @@ export default function SuitableforPage() {
       setDeleteId(null);
       fetchSuitablefors();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchSuitablefors]);
 

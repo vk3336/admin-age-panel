@@ -110,7 +110,7 @@ export default function DesignPage() {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/design`);
       setDesigns(data.data || []);
     } catch (error) {
-      console.error("Fetch error:", error);
+      // console.error("Fetch error:", error);
     }
   }, []);
 
@@ -118,16 +118,16 @@ export default function DesignPage() {
     const checkPermission = async () => {
       const email = getCurrentAdminEmail();
       if (!email) {
-        setAllowed(false);
+        // setAllowed(false);
         return;
       }
       const res = await fetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
       const data = await res.json();
       if (data.success) {
         const admin = data.data.find((a: any) => a.email === email);
-        setAllowed(admin?.canAccessFilter ?? false);
+        // setAllowed(admin?.canAccessFilter ?? false);
       } else {
-        setAllowed(false);
+        // setAllowed(false);
       }
     };
     checkPermission();
@@ -181,7 +181,7 @@ export default function DesignPage() {
       setDeleteId(null);
       fetchDesigns();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchDesigns]);
 

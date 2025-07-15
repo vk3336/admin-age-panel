@@ -20,7 +20,6 @@ export const cachedFetch = async (url: string, options?: RequestInit) => {
     cache.set(cacheKey, { data, timestamp: Date.now() });
     return data;
   } catch (error) {
-    console.error('Fetch error:', error);
     throw error;
   }
 };

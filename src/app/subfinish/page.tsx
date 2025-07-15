@@ -330,7 +330,7 @@ export default function SubfinishPage() {
       setDeleteId(null);
       fetchSubfinishes();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchSubfinishes]);
 

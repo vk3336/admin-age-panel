@@ -270,7 +270,7 @@ export default function StructurePage() {
       setDeleteId(null);
       fetchStructures();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchStructures]);
 

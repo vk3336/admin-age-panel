@@ -19,6 +19,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
+import { keyframes } from '@mui/system';
 
 import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -54,6 +55,11 @@ const filterModels = [
   { key: 'vendor', label: 'Vendors', icon: <BusinessIcon />, color: '#ff9ff3', count: 0 },
 ];
 
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+`;
+
 // DattaAble styled components
 const StatCard = React.memo(({ title, value, subtitle, icon, color, trend, trendValue }: {
   title: string;
@@ -66,53 +72,63 @@ const StatCard = React.memo(({ title, value, subtitle, icon, color, trend, trend
 }) => {
   return (
     <Card sx={{
-      background: 'background.paper',
-      borderRadius: '6px',
-      boxShadow: '0 4px 24px 0 rgba(34, 41, 47, 0.24)',
-      border: '1px solid',
-      borderColor: 'divider',
-      transition: 'all 0.3s ease',
+      background: `linear-gradient(135deg, #fff 60%, ${color}10 100%)`,
+      borderRadius: '18px',
+      boxShadow: '0 6px 32px 0 rgba(34, 41, 47, 0.10)',
+      border: 'none',
+      transition: 'all 0.3s cubic-bezier(.4,2,.3,1)',
+      animation: `${fadeIn} 0.7s cubic-bezier(.4,2,.3,1)`,
       '&:hover': {
-        boxShadow: '0 4px 25px 0 rgba(34, 41, 47, 0.24)',
-        transform: 'translateY(-2px)',
+        boxShadow: '0 12px 40px 0 rgba(34, 41, 47, 0.18)',
+        transform: 'scale(1.045)',
+        background: `linear-gradient(135deg, #fff 40%, ${color}22 100%)`,
       },
+      m: 1,
     }}>
       <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Avatar sx={{ 
-            bgcolor: color, 
-            color: 'white', 
-            width: 48, 
-            height: 48,
-            fontSize: '20px'
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+          <Box sx={{
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            background: `radial-gradient(circle at 60% 40%, ${color} 60%, #fff 100%)`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: `0 2px 12px 0 ${color}33`,
+            position: 'relative',
           }}>
-            {icon}
-          </Avatar>
-          {trend && (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 0.5,
-              color: trend === 'up' ? '#28c76f' : '#ea5455'
-            }}>
-              {trend === 'up' ? <TrendingUpIcon fontSize="small" /> : <TrendingDownIcon fontSize="small" />}
-              <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                {trendValue}%
-              </Typography>
+            <Box sx={{
+              position: 'absolute',
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              background: `conic-gradient(${color}33 0% 40%, transparent 40% 100%)`,
+              zIndex: 0,
+              top: '-8px',
+              left: '-8px',
+              filter: 'blur(2px)',
+            }} />
+            <Box sx={{ position: 'relative', zIndex: 1, color: '#fff', fontSize: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {icon}
             </Box>
-          )}
+          </Box>
         </Box>
-        <Typography variant="h4" sx={{ 
-          fontWeight: 700, 
-          color: 'text.primary',
-          mb: 1
+        <Typography variant="h3" sx={{ 
+          fontWeight: 800, 
+          color: color,
+          mb: 0.5,
+          textAlign: 'center',
+          letterSpacing: 1,
         }}>
           {typeof value === 'number' ? value.toLocaleString() : value}
         </Typography>
-        <Typography variant="body2" sx={{ 
+        <Typography variant="subtitle1" sx={{ 
           color: 'text.secondary',
           fontWeight: 500,
-          fontSize: '14px'
+          fontSize: '16px',
+          textAlign: 'center',
+          letterSpacing: 0.5,
         }}>
           {subtitle}
         </Typography>
@@ -420,7 +436,7 @@ export default function DashboardPage() {
       {/* Main Cards */}
       <Grid container spacing={3}>
         {cardData.map((card, idx) => (
-          <Grid item columns={3} key={card.title + idx}>
+          <Grid item xs={12} sm={6} md={4} lg={3} key={card.title + idx}>
             <Card
               sx={{
                 background: 'background.paper',

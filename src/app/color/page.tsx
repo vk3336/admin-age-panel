@@ -110,7 +110,7 @@ export default function ColorPage() {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/color`);
       setColors(data.data || []);
     } catch (error) {
-      console.error("Fetch error:", error);
+      // console.error("Fetch error:", error);
     }
   }, []);
 
@@ -156,7 +156,7 @@ export default function ColorPage() {
       setDeleteId(null);
       fetchColors();
     } catch (error) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
     }
   }, [deleteId, fetchColors]);
 

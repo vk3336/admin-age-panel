@@ -1,124 +1,83 @@
 "use client";
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
-  Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Alert, Pagination, Breadcrumbs, Link
+  Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link, Avatar
 } from '@mui/material';
-import ArticleIcon from '@mui/icons-material/Article';
+import BrushIcon from '@mui/icons-material/Brush';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import HomeIcon from '@mui/icons-material/Home';
 import { cachedFetch } from '../../utils/performance';
 
-interface Content {
+interface Motif {
   _id?: string;
   name: string;
 }
 
-const ContentRow = React.memo(({ content, onEdit, onDelete, viewOnly }: {
-  content: Content;
-  onEdit: (content: Content) => void;
+const MotifRow = React.memo(({ motif, onEdit, onDelete, viewOnly }: {
+  motif: Motif;
+  onEdit: (motif: Motif) => void;
   onDelete: (id: string) => void;
   viewOnly: boolean;
 }) => (
   <TableRow hover sx={{ transition: 'background 0.2s', '&:hover': { background: 'rgba(41,72,255,0.08)' } }}>
-    <TableCell sx={{ fontSize: 16 }}>{content.name}</TableCell>
+    <TableCell sx={{ fontSize: 16 }}>{motif.name}</TableCell>
     <TableCell>
-      <IconButton color="primary" onClick={() => onEdit(content)} disabled={viewOnly}><EditIcon /></IconButton>
-      <IconButton color="error" onClick={() => onDelete(content._id || "")} disabled={viewOnly}><DeleteIcon /></IconButton>
+      <IconButton color="primary" onClick={() => onEdit(motif)} disabled={viewOnly}><EditIcon /></IconButton>
+      <IconButton color="error" onClick={() => onDelete(motif._id || "")} disabled={viewOnly}><DeleteIcon /></IconButton>
     </TableCell>
   </TableRow>
 ));
 
-ContentRow.displayName = 'ContentRow';
+MotifRow.displayName = 'MotifRow';
 
-const ContentForm = React.memo(({ 
+const MotifForm = React.memo(({ 
   open, 
   onClose, 
   form, 
   setForm, 
   onSubmit, 
   submitting, 
-  editId,
-  error,
+  editId, 
   viewOnly
 }: {
   open: boolean;
   onClose: () => void;
-  form: Content;
-  setForm: (form: Content) => void;
+  form: Motif;
+  setForm: (form: Motif) => void;
   onSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
   editId: string | null;
-  error?: string;
   viewOnly: boolean;
 }) => {
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   }, [form, setForm]);
 
-  if (!open) return null;
-
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="sm" 
-      fullWidth
-      disableEscapeKeyDown={submitting}
-    >
-      <DialogTitle sx={{ fontWeight: 700, fontSize: 24, background: 'linear-gradient(90deg,#396afc,#2948ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-        {editId ? "Edit Content" : "Add Content"}
-      </DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ fontWeight: 700, fontSize: 24, background: 'linear-gradient(90deg,#396afc,#2948ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{editId ? "Edit Motif" : "Add Motif"}</DialogTitle>
       <form onSubmit={onSubmit}>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 3 }}>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          <TextField 
-            label="Name" 
-            name="name" 
-            value={form.name} 
-            onChange={handleChange} 
-            required 
-            fullWidth 
-            sx={{ fontSize: 18 }} 
-            disabled={submitting || viewOnly}
-            InputProps={{ readOnly: viewOnly }}
-            autoFocus
-          />
+        <DialogContent sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 3 }}>
+          <TextField label="Name" name="name" value={form.name} onChange={handleChange} required fullWidth sx={{ fontSize: 18 }} disabled={submitting || viewOnly} InputProps={{ readOnly: viewOnly }} />
         </DialogContent>
         <DialogActions>
-          <Button 
-            onClick={onClose} 
-            sx={{ fontWeight: 700, borderRadius: 3, fontSize: 16 }} 
-            disabled={submitting || viewOnly}
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
-            sx={{ fontWeight: 700, borderRadius: 3, fontSize: 16 }} 
-            disabled={submitting || viewOnly}
-          >
-            {editId ? "Update" : "Add"}
-          </Button>
+          <Button onClick={onClose} sx={{ fontWeight: 700, borderRadius: 3, fontSize: 16 }} disabled={submitting || viewOnly}>Cancel</Button>
+          <Button type="submit" variant="contained" sx={{ fontWeight: 700, borderRadius: 3, fontSize: 16 }} disabled={submitting || viewOnly}>{editId ? "Update" : "Add"}</Button>
         </DialogActions>
       </form>
     </Dialog>
   );
 });
 
-ContentForm.displayName = 'ContentForm';
+MotifForm.displayName = 'MotifForm';
 
 function getCurrentAdminEmail() {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('admin-email');
 }
 
-function getContentPagePermission() {
+function getMotifPagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
   if (!email) return 'denied';
@@ -130,13 +89,13 @@ function getContentPagePermission() {
   return adminPerm?.filterPermission || 'denied';
 }
 
-export default function ContentPage() {
+export default function MotifPage() {
   // All hooks at the top
   const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
-  const [contents, setContents] = useState<Content[]>([]);
+  const [motifs, setMotifs] = useState<Motif[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<Content>({ name: "" });
+  const [form, setForm] = useState<Motif>({ name: "" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -144,13 +103,11 @@ export default function ContentPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
-  const [error, setError] = useState("");
 
-
-  const fetchContents = useCallback(async () => {
+  const fetchMotifs = useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/content`);
-      setContents(data.data || []);
+      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif`);
+      setMotifs(data.data || []);
     } catch (error) {
       // console.error("Fetch error:", error);
     }
@@ -160,36 +117,32 @@ export default function ContentPage() {
     const checkPermission = async () => {
       const email = getCurrentAdminEmail();
       if (!email) {
-        setAllowed(false);
         return;
       }
       const res = await fetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
       const data = await res.json();
       if (data.success) {
         const admin = data.data.find((a: any) => a.email === email);
-        setAllowed(admin?.canAccessFilter ?? false);
       } else {
-        setAllowed(false);
       }
     };
     checkPermission();
   }, []);
 
   useEffect(() => {
-    fetchContents();
-    setPageAccess(getContentPagePermission());
-  }, [fetchContents]);
-
-  useEffect(() => {
     // Check permission from localStorage
-    const permission = getContentPagePermission();
+    const permission = getMotifPagePermission();
     setPageAccess(permission);
   }, []);
 
-  const handleOpen = useCallback((content: Content | null = null) => {
-    setEditId(content?._id || null);
-    setForm(content ? { ...content } : { name: "" });
-    setError("");
+  useEffect(() => {
+    fetchMotifs();
+    setPageAccess(getMotifPagePermission());
+  }, [fetchMotifs]);
+
+  const handleOpen = useCallback((motif: Motif | null = null) => {
+    setEditId(motif?._id || null);
+    setForm(motif ? { ...motif } : { name: "" });
     setOpen(true);
   }, []);
 
@@ -197,68 +150,39 @@ export default function ContentPage() {
     setOpen(false);
     setEditId(null);
     setForm({ name: "" });
-    setError("");
   }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setError("");
-    
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/content${editId ? "/" + editId : ""}`;
-      
-      const response = await fetch(url, {
+      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif${editId ? "/" + editId : ""}`;
+      await fetch(url, {
         method,
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      
-      if (result.success) {
-        fetchContents();
-        handleClose();
-      } else {
-        setError(result.message || "Operation failed");
-      }
-    } catch (error) {
-      // console.error("Submit error:", error);
-      setError(error instanceof Error ? error.message : "An error occurred");
+      fetchMotifs();
+      handleClose();
     } finally {
       setSubmitting(false);
     }
-  }, [form, editId, fetchContents, handleClose]);
+  }, [form, editId, fetchMotifs, handleClose]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/content/${deleteId}`, { 
-        method: "DELETE" 
-      });
-      
-      if (response.ok) {
-        setDeleteId(null);
-        fetchContents();
-      } else {
-        // console.error("Delete failed:", response.statusText);
-      }
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif/${deleteId}`, { method: "DELETE" });
+      setDeleteId(null);
+      fetchMotifs();
     } catch (error) {
       // console.error("Delete error:", error);
     }
-  }, [deleteId, fetchContents]);
+  }, [deleteId, fetchMotifs]);
 
-  const handleEdit = useCallback((content: Content) => {
-    handleOpen(content);
+  const handleEdit = useCallback((motif: Motif) => {
+    handleOpen(motif);
   }, [handleOpen]);
 
   const handleDeleteClick = useCallback((id: string) => {
@@ -270,15 +194,17 @@ export default function ContentPage() {
     letterSpacing: 1,
     background: 'linear-gradient(90deg,#396afc,#2948ff)',
     WebkitBackgroundClip: 'text' as const,
-    WebkitTextFillColor: 'transparent' as const
+    WebkitTextFillColor: 'transparent' as const,
+    fontSize: 32,
+    marginBottom: 16,
   }), []);
 
-  // Filter contents by search
-  const filteredContents = contents.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
+  // Filter motifs by search
+  const filteredMotifs = motifs.filter((m) =>
+    m.name.toLowerCase().includes(search.toLowerCase())
   );
   // Pagination
-  const paginatedContents = filteredContents.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const paginatedMotifs = filteredMotifs.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   // Permission check rendering
   if (pageAccess === 'denied') {
@@ -315,8 +241,8 @@ export default function ContentPage() {
           Dashboard
         </Link>
         <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
-          <ArticleIcon sx={{ mr: 0.5 }} fontSize="small" />
-          Contents
+          <BrushIcon sx={{ mr: 0.5 }} fontSize="small" />
+          Motifs
         </Typography>
       </Breadcrumbs>
 
@@ -329,7 +255,7 @@ export default function ContentPage() {
             width: 48, 
             height: 48 
           }}>
-            <ArticleIcon sx={{ fontSize: 24 }} />
+            <BrushIcon sx={{ fontSize: 24 }} />
           </Avatar>
           <Box>
             <Typography variant="h4" sx={{ 
@@ -337,18 +263,18 @@ export default function ContentPage() {
               color: 'text.primary',
               mb: 0.5
             }}>
-              Content Management
+              Motif Management
             </Typography>
             <Typography variant="body2" sx={{ 
               color: 'text.secondary'
             }}>
-              Manage your product content
+              Manage your product motifs
             </Typography>
           </Box>
         </Box>
         <Button
           variant="contained"
-          startIcon={<ArticleIcon />}
+          startIcon={<BrushIcon />}
           onClick={() => handleOpen()}
           disabled={pageAccess === 'view'}
           sx={{
@@ -365,7 +291,7 @@ export default function ContentPage() {
             },
           }}
         >
-          Add Content
+          Add Motif
         </Button>
       </Box>
 
@@ -381,17 +307,17 @@ export default function ContentPage() {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              Contents ({filteredContents.length})
+              Motifs ({filteredMotifs.length})
             </Typography>
           </Box>
           <TextField
-            placeholder="Search contents..."
+            placeholder="Search motifs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             fullWidth
             InputProps={{
               startAdornment: (
-                <ArticleIcon sx={{ color: 'text.secondary', mr: 1 }} />
+                <BrushIcon sx={{ color: 'text.secondary', mr: 1 }} />
               ),
             }}
             sx={{
@@ -401,10 +327,10 @@ export default function ContentPage() {
                   borderColor: 'divider',
                 },
                 '&:hover fieldset': {
-                  borderColor: 'warning.main',
+                  borderColor: 'success.main',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: 'warning.main',
+                  borderColor: 'success.main',
                 },
               },
             }}
@@ -412,7 +338,7 @@ export default function ContentPage() {
         </CardContent>
       </Card>
 
-      {/* Contents Table */}
+      {/* Motifs Table */}
       <Card sx={{
         background: 'background.paper',
         borderRadius: '6px',
@@ -431,7 +357,7 @@ export default function ContentPage() {
                     borderBottom: '1px solid',
                     borderColor: 'divider'
                   }}>
-                    Content Name
+                    Motif Name
                   </TableCell>
                   <TableCell sx={{ 
                     fontWeight: 600, 
@@ -444,19 +370,19 @@ export default function ContentPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedContents.map((content) => (
-                  <ContentRow
-                    key={content._id}
-                    content={content}
+                {paginatedMotifs.map((motif) => (
+                  <MotifRow
+                    key={motif._id}
+                    motif={motif}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
                     viewOnly={pageAccess === 'view'}
                   />
                 ))}
-                {paginatedContents.length === 0 && (
+                {paginatedMotifs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={2} sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-                      No content found
+                      No motifs found
                     </TableCell>
                   </TableRow>
                 )}
@@ -467,25 +393,20 @@ export default function ContentPage() {
       </Card>
 
       {/* Pagination */}
-      {filteredContents.length > rowsPerPage && (
+      {filteredMotifs.length > rowsPerPage && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
           <Pagination
-            count={Math.ceil(filteredContents.length / rowsPerPage)}
+            count={Math.ceil(filteredMotifs.length / rowsPerPage)}
             page={page}
             onChange={(_, value) => setPage(value)}
-            color="warning"
-            sx={{
-              '& .MuiPaginationItem-root': {
-                borderRadius: '6px',
-                fontWeight: 500,
-              },
-            }}
+            color="primary"
+            shape="rounded"
           />
         </Box>
       )}
 
-      {/* Form Dialog */}
-      <ContentForm
+      {/* Motif Form Dialog */}
+      <MotifForm
         open={open}
         onClose={handleClose}
         form={form}
@@ -493,53 +414,18 @@ export default function ContentPage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
-        error={error}
         viewOnly={pageAccess === 'view'}
       />
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        PaperProps={{
-          sx: {
-            borderRadius: '6px',
-            boxShadow: '0 4px 24px 0 rgba(34, 41, 47, 0.24)',
-          }
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 600, color: 'text.primary' }}>
-          Confirm Delete
-        </DialogTitle>
+      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
+        <DialogTitle>Delete Motif</DialogTitle>
         <DialogContent>
-          <Typography sx={{ color: 'text.secondary' }}>
-            Are you sure you want to delete this content? This action cannot be undone.
-          </Typography>
+          <Typography>Are you sure you want to delete this motif?</Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button 
-            onClick={() => setDeleteId(null)}
-            sx={{ 
-              fontWeight: 500, 
-              borderRadius: '6px',
-              color: 'text.secondary',
-            }}
-            disabled={pageAccess === 'view'}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleDelete}
-            variant="contained"
-            color="error"
-            sx={{ 
-              fontWeight: 500, 
-              borderRadius: '6px',
-            }}
-            disabled={pageAccess === 'view'}
-          >
-            Delete
-          </Button>
+        <DialogActions>
+          <Button onClick={() => setDeleteId(null)}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
         </DialogActions>
       </Dialog>
     </Box>
