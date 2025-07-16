@@ -258,7 +258,7 @@ export default function SubsuitablePage() {
   const fetchSubsuitables = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subsuitable`);
+      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/subsuitable`);
       setSubsuitables(data.data || []);
     } finally {
       setLoading(false);
@@ -276,7 +276,7 @@ export default function SubsuitablePage() {
   }, [fetchSubsuitables]);
 
   useEffect(() => {
-    fetch('http://localhost:7000/api/suitablefor')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/suitablefor`)
       .then(res => res.json())
       .then(data => setSuitablefors(data.data || []));
   }, []);
@@ -298,7 +298,7 @@ export default function SubsuitablePage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subsuitable${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/subsuitable${editId ? "/" + editId : ""}`;
       // Always send only the reference ID
       const payload = {
         ...form,
@@ -319,7 +319,7 @@ export default function SubsuitablePage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subsuitable/${deleteId}`, { method: "DELETE" });
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subsuitable/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchSubsuitables();
     } catch (error) {

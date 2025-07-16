@@ -264,7 +264,7 @@ export default function SubfinishPage() {
   const fetchSubfinishes = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subfinish`);
+      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/subfinish`);
       setSubfinishes(data.data || []);
     } finally {
       setLoading(false);
@@ -277,7 +277,7 @@ export default function SubfinishPage() {
   }, [fetchSubfinishes]);
 
   useEffect(() => {
-    fetch('http://localhost:7000/api/finish')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/finish`)
       .then(res => res.json())
       .then(data => setFinishes(data.data || []));
   }, []);
@@ -305,7 +305,7 @@ export default function SubfinishPage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subfinish${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/subfinish${editId ? "/" + editId : ""}`;
       // Always send only the reference ID
       const payload = {
         ...form,
@@ -326,7 +326,7 @@ export default function SubfinishPage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subfinish/${deleteId}`, { method: "DELETE" });
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subfinish/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchSubfinishes();
     } catch (error) {

@@ -264,7 +264,7 @@ export default function SubstructurePage() {
   const fetchSubstructures = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/substructure`);
+      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/substructure`);
       setSubstructures(data.data || []);
     } finally {
       setLoading(false);
@@ -277,7 +277,7 @@ export default function SubstructurePage() {
   }, [fetchSubstructures]);
 
   useEffect(() => {
-    fetch('http://localhost:7000/api/structure')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/structure`)
       .then(res => res.json())
       .then(data => setStructures(data.data || []));
   }, []);
@@ -299,7 +299,7 @@ export default function SubstructurePage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/substructure${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/substructure${editId ? "/" + editId : ""}`;
       // Always send only the reference ID
       const payload = {
         ...form,
@@ -320,7 +320,7 @@ export default function SubstructurePage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/substructure/${deleteId}`, { method: "DELETE" });
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/substructure/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchSubstructures();
     } catch (error) {
