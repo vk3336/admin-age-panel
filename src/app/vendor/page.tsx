@@ -218,6 +218,7 @@ export default function VendorPage() {
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
   const [allowed, setAllowed] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
   const fetchVendors = useCallback(async () => {
@@ -292,12 +293,22 @@ export default function VendorPage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
+    setDeleteError(null);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data && data.message && data.message.includes("in use")) {
+          setDeleteError("Cannot delete: Vendor is in use by one or more products.");
+        } else {
+          setDeleteError(data.message || "Failed to delete vendor.");
+        }
+        return;
+      }
       setDeleteId(null);
       fetchVendors();
     } catch (error) {
-      // console.error("Delete error:", error);
+      setDeleteError("An error occurred while deleting the vendor.");
     }
   }, [deleteId, fetchVendors]);
 
@@ -317,7 +328,7 @@ export default function VendorPage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don't have permission to access this page.
+          You don&apost have permission to access this page.
         </Typography>
       </Box>
     );
@@ -548,7 +559,7 @@ export default function VendorPage() {
       {/* Delete Confirmation Dialog */}
       <Dialog 
         open={!!deleteId} 
-        onClose={() => setDeleteId(null)}
+        onClose={() => { setDeleteId(null); setDeleteError(null); }}
         PaperProps={{
           sx: {
             borderRadius: '6px',
@@ -563,10 +574,15 @@ export default function VendorPage() {
           <Typography sx={{ color: 'text.secondary' }}>
             Are you sure you want to delete this vendor? This action cannot be undone.
           </Typography>
+          {deleteError && (
+            <Typography sx={{ color: 'error.main', mt: 2 }}>
+              {deleteError}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button 
-            onClick={() => setDeleteId(null)}
+            onClick={() => { setDeleteId(null); setDeleteError(null); }}
             sx={{ 
               fontWeight: 500, 
               borderRadius: '6px',

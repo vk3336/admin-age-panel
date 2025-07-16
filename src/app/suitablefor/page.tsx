@@ -217,6 +217,7 @@ export default function SuitableforPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
   const fetchSuitablefors = useCallback(async () => {
@@ -266,12 +267,22 @@ export default function SuitableforPage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
+    setDeleteError(null);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/suitablefor/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/suitablefor/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data && data.message && data.message.includes("in use")) {
+          setDeleteError(data.message);
+        } else {
+          setDeleteError(data.message || "Failed to delete suitablefor.");
+        }
+        return;
+      }
       setDeleteId(null);
       fetchSuitablefors();
     } catch (error) {
-      // console.error("Delete error:", error);
+      setDeleteError("An error occurred while deleting the suitablefor.");
     }
   }, [deleteId, fetchSuitablefors]);
 
@@ -291,7 +302,7 @@ export default function SuitableforPage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don't have permission to access this page.
+          You don&apost have permission to access this page.
         </Typography>
       </Box>
     );
@@ -522,7 +533,7 @@ export default function SuitableforPage() {
       {/* Delete Confirmation Dialog */}
       <Dialog 
         open={!!deleteId} 
-        onClose={() => setDeleteId(null)}
+        onClose={() => { setDeleteId(null); setDeleteError(null); }}
         PaperProps={{
           sx: {
             borderRadius: '6px',
@@ -535,12 +546,17 @@ export default function SuitableforPage() {
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ color: 'text.secondary' }}>
-            Are you sure you want to delete this suitable for? This action cannot be undone.
+            Are you sure you want to delete this suitablefor? This action cannot be undone.
           </Typography>
+          {deleteError && (
+            <Typography sx={{ color: 'error.main', mt: 2 }}>
+              {deleteError}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button 
-            onClick={() => setDeleteId(null)}
+            onClick={() => { setDeleteId(null); setDeleteError(null); }}
             sx={{ 
               fontWeight: 500, 
               borderRadius: '6px',

@@ -103,6 +103,7 @@ export default function MotifPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchMotifs = useCallback(async () => {
     try {
@@ -172,12 +173,22 @@ export default function MotifPage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
+    setDeleteError(null);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data && data.message && data.message.includes("in use")) {
+          setDeleteError("Cannot delete: Motif is in use by one or more products.");
+        } else {
+          setDeleteError(data.message || "Failed to delete motif.");
+        }
+        return;
+      }
       setDeleteId(null);
       fetchMotifs();
     } catch (error) {
-      // console.error("Delete error:", error);
+      setDeleteError("An error occurred while deleting the motif.");
     }
   }, [deleteId, fetchMotifs]);
 
@@ -214,7 +225,7 @@ export default function MotifPage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don't have permission to access this page.
+          You don&apost have permission to access this page.
         </Typography>
       </Box>
     );
@@ -418,14 +429,53 @@ export default function MotifPage() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
-        <DialogTitle>Delete Motif</DialogTitle>
+      <Dialog
+        open={!!deleteId}
+        onClose={() => { setDeleteId(null); setDeleteError(null); }}
+        PaperProps={{
+          sx: {
+            borderRadius: '6px',
+            boxShadow: '0 4px 24px 0 rgba(34, 41, 47, 0.24)',
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: 'text.primary' }}>
+          Confirm Delete
+        </DialogTitle>
         <DialogContent>
-          <Typography>Are you sure you want to delete this motif?</Typography>
+          <Typography sx={{ color: 'text.secondary' }}>
+            Are you sure you want to delete this motif? This action cannot be undone.
+          </Typography>
+          {deleteError && (
+            <Typography sx={{ color: 'error.main', mt: 2 }}>
+              {deleteError}
+            </Typography>
+          )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteId(null)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button 
+            onClick={() => { setDeleteId(null); setDeleteError(null); }}
+            sx={{ 
+              fontWeight: 500, 
+              borderRadius: '6px',
+              color: 'text.secondary',
+            }}
+            disabled={pageAccess === 'view'}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDelete}
+            variant="contained"
+            color="error"
+            sx={{ 
+              fontWeight: 500, 
+              borderRadius: '6px',
+            }}
+            disabled={pageAccess === 'view'}
+          >
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

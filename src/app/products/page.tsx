@@ -71,6 +71,10 @@ function getImageUrl(img: string | undefined): string | undefined {
   return `${API_URL}/images/${img}`;
 }
 
+function hasName(obj: any): obj is { name: string } {
+  return obj && typeof obj === 'object' && 'name' in obj && typeof obj.name === 'string';
+}
+
 export default function ProductPage() {
   const [pageAccess, setPageAccess] = useState('denied');
   const [products, setProducts] = useState<Product[]>([]);
@@ -159,6 +163,7 @@ export default function ProductPage() {
   const [imgDims, setImgDims] = useState<{img?: [number, number], image1?: [number, number], image2?: [number, number]}>({});
   // Add state for video dimensions
   const [videoDims, setVideoDims] = useState<[number, number] | undefined>(undefined);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const umOptions: string[] = ["KG", "Yard", "Meter"];
   const currencyOptions: string[] = ["INR", "USD", "EUR", "GBP", "JPY", "CNY", "CAD", "AUD", "SGD", "CHF", "ZAR", "RUB", "BRL", "HKD", "NZD", "KRW", "THB", "MYR", "IDR", "PHP", "VND", "TRY", "SAR", "AED", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "ILS", "MXN", "TWD", "ARS", "CLP", "COP", "PEN", "EGP", "PKR", "BDT", "LKR", "NPR", "KES", "NGN", "GHS", "UAH", "QAR", "OMR", "KWD", "BHD", "JOD", "MAD", "DZD", "TND", "LBP", "IQD", "IRR", "AFN", "MNT", "UZS", "KZT", "AZN", "GEL", "BYN", "MDL", "ALL", "MKD", "BAM", "HRK", "RSD", "BGN", "RON", "ISK"];
@@ -386,21 +391,24 @@ export default function ProductPage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
-    
+    setDeleteError(null);
     try {
       const res = await fetch(`${API_URL}/product/${deleteId}`, {
         method: "DELETE",
       });
-      
-      if (res.ok) {
-        setDeleteId(null);
-        fetchProducts();
-      } else {
-        const data = await res.json();
-        alert(data.message || "Failed to delete product");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data && data.message && data.message.includes("in use")) {
+          setDeleteError(data.message);
+        } else {
+          setDeleteError(data.message || "Failed to delete product.");
+        }
+        return;
       }
+      setDeleteId(null);
+      fetchProducts();
     } catch (error) {
-      alert("Network error. Please try again.");
+      setDeleteError("An error occurred while deleting the product.");
     }
   }, [deleteId, fetchProducts]);
 
@@ -481,7 +489,7 @@ export default function ProductPage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don't have permission to access this page.
+          You don&apost have permission to access this page.
         </Typography>
       </Box>
     );
@@ -633,19 +641,19 @@ export default function ProductPage() {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={typeof product.category === 'object' ? product.category.name : product.category}
+                        label={hasName(product.category) ? product.category.name : product.category || 'N/A'}
                         size="small"
                         sx={{ bgcolor: '#e8f4fd', color: '#3498db', fontWeight: 500 }}
                       />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" sx={{ color: '#2c3e50' }}>
-                        {typeof product.vendor === 'object' ? product.vendor.name : product.vendor}
+                        {hasName(product.vendor) ? product.vendor.name : product.vendor || 'N/A'}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={typeof product.color === 'object' ? product.color.name : product.color}
+                        label={hasName(product.color) ? product.color.name : product.color || 'N/A'}
                         size="small"
                         sx={{ bgcolor: '#fef2f2', color: '#e74c3c', fontWeight: 500 }}
                       />
@@ -1112,16 +1120,16 @@ export default function ProductPage() {
                       {field.label}
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>
-                      {typeof selectedProduct[field.key as keyof Product] === 'object' 
-                        ? (selectedProduct[field.key as keyof Product] as any)?.name 
-                        : selectedProduct[field.key as keyof Product]}
+                      {hasName((selectedProduct as any)[field.key])
+                        ? (selectedProduct as any)[field.key].name || '-' 
+                        : (selectedProduct as any)[field.key] || '-'}
                     </Typography>
                   </Box>
                 ))}
                 {/* Motif and new fields */}
                 <Box>
                   <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>Motif</Typography>
-                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{typeof selectedProduct.motif === 'object' ? selectedProduct.motif?.name : selectedProduct.motif || '-'}</Typography>
+                  <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>{hasName(selectedProduct.motif) ? selectedProduct.motif.name || '-' : selectedProduct.motif || '-'}</Typography>
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>UM</Typography>
@@ -1163,7 +1171,7 @@ export default function ProductPage() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
+      <Dialog open={!!deleteId} onClose={() => { setDeleteId(null); setDeleteError(null); }}>
         <DialogTitle sx={{ fontWeight: 600, color: '#2c3e50' }}>
           Confirm Delete
         </DialogTitle>
@@ -1171,9 +1179,14 @@ export default function ProductPage() {
           <Typography>
             Are you sure you want to delete this product? This action cannot be undone.
           </Typography>
+          {deleteError && (
+            <Typography sx={{ color: 'error.main', mt: 2 }}>
+              {deleteError}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteId(null)} sx={{ color: '#7f8c8d' }}>
+          <Button onClick={() => { setDeleteId(null); setDeleteError(null); }} sx={{ color: '#7f8c8d' }}>
             Cancel
           </Button>
           <Button

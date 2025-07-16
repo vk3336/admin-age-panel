@@ -118,9 +118,9 @@ const GroupcodeForm = React.memo(({
 
   useEffect(() => {
     if (typeof form.img === 'string') setImgPreview(form.img);
-    // don't touch imgPreview if form.img is a File
+    // don&apost touch imgPreview if form.img is a File
     if (typeof form.video === 'string') setVideoPreview(form.video);
-    // don't touch videoPreview if form.video is a File
+    // don&apost touch videoPreview if form.video is a File
   }, [form.img, form.video, open]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -373,6 +373,7 @@ export default function GroupcodePage() {
   const [viewGroupcode, setViewGroupcode] = useState<Groupcode | null>(null);
   const [imgDims, setImgDims] = useState<[number, number] | undefined>(undefined);
   const [videoDims, setVideoDims] = useState<[number, number] | undefined>(undefined);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function isFile(val: unknown): val is File {
     return typeof val === 'object' && val !== null && (val as File).name !== undefined;
@@ -444,12 +445,22 @@ export default function GroupcodePage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
+    setDeleteError(null);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data && data.message && data.message.includes("in use")) {
+          setDeleteError("Cannot delete: Groupcode is in use by one or more products.");
+        } else {
+          setDeleteError(data.message || "Failed to delete groupcode.");
+        }
+        return;
+      }
       setDeleteId(null);
       fetchGroupcodes();
     } catch (error) {
-      // Optionally show user-friendly error message
+      setDeleteError("An error occurred while deleting the groupcode.");
     }
   }, [deleteId, fetchGroupcodes]);
 
@@ -485,7 +496,7 @@ export default function GroupcodePage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don't have permission to access this page.
+          You don&apost have permission to access this page.
         </Typography>
       </Box>
     );
@@ -717,7 +728,7 @@ export default function GroupcodePage() {
       {/* Delete Confirmation Dialog */}
       <Dialog 
         open={!!deleteId} 
-        onClose={() => setDeleteId(null)}
+        onClose={() => { setDeleteId(null); setDeleteError(null); }}
         PaperProps={{
           sx: {
             borderRadius: '6px',
@@ -730,12 +741,17 @@ export default function GroupcodePage() {
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ color: 'text.secondary' }}>
-            Are you sure you want to delete this group code? This action cannot be undone.
+            Are you sure you want to delete this groupcode? This action cannot be undone.
           </Typography>
+          {deleteError && (
+            <Typography sx={{ color: 'error.main', mt: 2 }}>
+              {deleteError}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button 
-            onClick={() => setDeleteId(null)}
+            onClick={() => { setDeleteId(null); setDeleteError(null); }}
             sx={{ 
               fontWeight: 500, 
               borderRadius: '6px',

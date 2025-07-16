@@ -254,6 +254,7 @@ export default function SubsuitablePage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchSubsuitables = useCallback(async () => {
     setLoading(true);
@@ -318,12 +319,22 @@ export default function SubsuitablePage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
+    setDeleteError(null);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subsuitable/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subsuitable/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data && data.message && data.message.includes("in use")) {
+          setDeleteError("Cannot delete: Subsuitable is in use by one or more products.");
+        } else {
+          setDeleteError(data.message || "Failed to delete subsuitable.");
+        }
+        return;
+      }
       setDeleteId(null);
       fetchSubsuitables();
     } catch (error) {
-      // console.error("Delete error:", error);
+      setDeleteError("An error occurred while deleting the subsuitable.");
     }
   }, [deleteId, fetchSubsuitables]);
 
@@ -587,7 +598,7 @@ export default function SubsuitablePage() {
       {/* Delete Confirmation Dialog */}
       <Dialog 
         open={!!deleteId} 
-        onClose={() => setDeleteId(null)}
+        onClose={() => { setDeleteId(null); setDeleteError(null); }}
         PaperProps={{
           sx: {
             borderRadius: '6px',
@@ -600,12 +611,17 @@ export default function SubsuitablePage() {
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ color: 'text.secondary' }}>
-            Are you sure you want to delete this sub suitable? This action cannot be undone.
+            Are you sure you want to delete this subsuitable? This action cannot be undone.
           </Typography>
+          {deleteError && (
+            <Typography sx={{ color: 'error.main', mt: 2 }}>
+              {deleteError}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button 
-            onClick={() => setDeleteId(null)}
+            onClick={() => { setDeleteId(null); setDeleteError(null); }}
             sx={{ 
               fontWeight: 500, 
               borderRadius: '6px',

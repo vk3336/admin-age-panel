@@ -259,6 +259,7 @@ export default function SubstructurePage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
   const fetchSubstructures = useCallback(async () => {
@@ -319,12 +320,22 @@ export default function SubstructurePage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
+    setDeleteError(null);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/substructure/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/substructure/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data && data.message && data.message.includes("in use")) {
+          setDeleteError("Cannot delete: Substructure is in use by one or more products.");
+        } else {
+          setDeleteError(data.message || "Failed to delete substructure.");
+        }
+        return;
+      }
       setDeleteId(null);
       fetchSubstructures();
     } catch (error) {
-      // console.error("Delete error:", error);
+      setDeleteError("An error occurred while deleting the substructure.");
     }
   }, [deleteId, fetchSubstructures]);
 
@@ -344,7 +355,7 @@ export default function SubstructurePage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don't have permission to access this page.
+          You don&apost have permission to access this page.
         </Typography>
       </Box>
     );
@@ -585,7 +596,7 @@ export default function SubstructurePage() {
       {/* Delete Confirmation Dialog */}
       <Dialog 
         open={!!deleteId} 
-        onClose={() => setDeleteId(null)}
+        onClose={() => { setDeleteId(null); setDeleteError(null); }}
         PaperProps={{
           sx: {
             borderRadius: '6px',
@@ -598,12 +609,17 @@ export default function SubstructurePage() {
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ color: 'text.secondary' }}>
-            Are you sure you want to delete this sub structure? This action cannot be undone.
+            Are you sure you want to delete this substructure? This action cannot be undone.
           </Typography>
+          {deleteError && (
+            <Typography sx={{ color: 'error.main', mt: 2 }}>
+              {deleteError}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button 
-            onClick={() => setDeleteId(null)}
+            onClick={() => { setDeleteId(null); setDeleteError(null); }}
             sx={{ 
               fontWeight: 500, 
               borderRadius: '6px',

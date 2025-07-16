@@ -221,7 +221,7 @@ function SeoPage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don't have permission to access this page.
+          You don&apost have permission to access this page.
         </Typography>
       </Box>
     );
@@ -432,7 +432,7 @@ function SeoPage() {
               } else {
                 // Support nested fields (dot notation)
                 if (!field.key) return null;
-                const value = field.key.split('.').reduce((acc, k) => acc && acc[k], form) || "";
+                const value = field.key.split('.').reduce((acc, k) => acc && typeof acc === 'object' && k in acc ? acc[k] : undefined, form) || "";
                 return (
                 <TextField
                   key={field.key}
@@ -479,57 +479,81 @@ function SeoPage() {
         <DialogTitle sx={{ fontWeight: 900, fontSize: 28 }}>SEO Details</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           {selectedSeo && (
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={3}>
-              <Box display="flex" alignItems="center" gap={3} mb={2}>
-                <Box>
-                  <Avatar
-                    variant="rounded"
-                    src={getProductImageUrl(selectedSeo.product)}
-                    sx={{ width: 120, height: 120, mb: 1 }}
-                  >
-                    {selectedSeo.product?.name?.[0] || "-"}
-                  </Avatar>
-                </Box>
+            <Box>
+              {/* Product Info at the top */}
+              <Box display="flex" alignItems="center" gap={3} mb={4}>
+                <Avatar
+                  variant="rounded"
+                  src={getProductImageUrl(selectedSeo.product)}
+                  sx={{ width: 100, height: 100, mr: 2 }}
+                >
+                  {selectedSeo.product?.name?.[0] || "-"}
+                </Avatar>
                 <Box>
                   <Typography variant="h5" fontWeight={700} color="primary">
                     {selectedSeo.product?.name || "-"}
+                  </Typography>
+                  <Typography variant="subtitle2" color="textSecondary">
+                    Product
                   </Typography>
                 </Box>
               </Box>
               {/* Group fields by section for display */}
               {(() => {
-                let currentSection = null;
-                return SEO_FIELDS.map(field => {
+                let currentSection: string | null = null;
+                let sectionFields: any[] = [];
+                const sections: any[] = [];
+                SEO_FIELDS.forEach(field => {
                   if (field.section) {
+                    if (sectionFields.length > 0 && currentSection !== null) {
+                      sections.push(
+                        <Box key={currentSection} mb={3}>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
+                            {currentSection}
+                          </Typography>
+                          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2}>
+                            {sectionFields}
+                          </Box>
+                        </Box>
+                      );
+                      sectionFields = [];
+                    }
                     currentSection = field.section;
-                    return (
-                      <Box key={field.section} sx={{ width: '100%', mt: 3, mb: 1 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                          {field.section}
+                  } else if (field.key) {
+                    // Support nested fields for view
+                    const value = field.key.split('.').reduce((acc, k) => (acc && typeof acc === 'object' && k in acc) ? acc[k] : undefined, selectedSeo) ?? "-";
+                    sectionFields.push(
+                      <Box key={field.key} minWidth={180}>
+                        <Typography variant="subtitle2" color="textSecondary" fontWeight={600}>{field.label}</Typography>
+                        <Typography variant="body1">
+                          {typeof value === "boolean"
+                            ? (value ? "Yes" : "No")
+                            : Array.isArray(value)
+                              ? value.join(", ")
+                              : (typeof value === "object" && value !== null && value.name)
+                                ? value.name
+                                : (typeof value === "object" && value !== null)
+                                  ? JSON.stringify(value)
+                                  : value}
                         </Typography>
                       </Box>
                     );
                   }
-                  if (!field.key) return null;
-                  // Support nested fields for view
-                  const value = field.key.split('.').reduce((acc, k) => acc && acc[k], selectedSeo) ?? "-";
-                  return (
-                  <Box key={field.key} minWidth={220} flex={1}>
-                    <Typography variant="subtitle2" color="textSecondary" fontWeight={600}>{field.label}</Typography>
-                    <Typography variant="body1">
-                        {typeof value === "boolean"
-                          ? (value ? "Yes" : "No")
-                          : Array.isArray(value)
-                            ? value.join(", ")
-                            : (typeof value === "object" && value !== null && value.name)
-                              ? value.name
-                              : (typeof value === "object" && value !== null)
-                                ? JSON.stringify(value)
-                                : value}
-                    </Typography>
-                  </Box>
-                  );
                 });
+                // Push last section
+                if (sectionFields.length > 0 && currentSection !== null) {
+                  sections.push(
+                    <Box key={currentSection} mb={3}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
+                        {currentSection}
+                      </Typography>
+                      <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2}>
+                        {sectionFields}
+                      </Box>
+                    </Box>
+                  );
+                }
+                return sections;
               })()}
             </Box>
           )}
