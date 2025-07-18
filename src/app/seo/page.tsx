@@ -99,10 +99,10 @@ interface Product {
 
 // Type guards for dynamic property access
 function hasName(obj: unknown): obj is { name: string } {
-  return Boolean(obj && typeof obj === 'object' && 'name' in obj && typeof (obj as any).name === 'string');
+  return Boolean(obj && typeof obj === 'object' && 'name' in obj && typeof (obj as { name?: unknown }).name === 'string');
 }
 function hasImg(obj: unknown): obj is { img: string } {
-  return Boolean(obj && typeof obj === 'object' && 'img' in obj && typeof (obj as any).img === 'string');
+  return Boolean(obj && typeof obj === 'object' && 'img' in obj && typeof (obj as { img?: unknown }).img === 'string');
 }
 
 function SeoPage() {
@@ -150,8 +150,8 @@ function SeoPage() {
     setForm(item && typeof item === 'object' && item !== null ? {
       ...item,
       product:
-        item.product && typeof item.product === 'object' && item.product !== null && '_id' in item.product && typeof (item.product as any)._id === 'string'
-          ? (item.product as any)._id
+        item.product && typeof item.product === 'object' && item.product !== null && '_id' in item.product && typeof (item.product as unknown as { _id: string })._id === 'string'
+          ? (item.product as unknown as { _id: string })._id
           : item.product
     } : {});
     setOpen(true);
@@ -171,8 +171,8 @@ function SeoPage() {
       typeof seo.product === 'object' &&
       seo.product !== null &&
       '_id' in seo.product &&
-      typeof (seo.product as any)._id === 'string' &&
-      ((seo.product as any)._id === productId)
+      typeof (seo.product as unknown as { _id: string })._id === 'string' &&
+      ((seo.product as unknown as { _id: string })._id === productId)
     );
     if (existingSeo) {
       const newForm: Record<string, unknown> = { product: productId };
@@ -457,7 +457,7 @@ function SeoPage() {
                 // Support nested fields (dot notation)
                 if (!field.key) return null;
                 const value = typeof field.key === 'string'
-                  ? field.key.split('.').reduce((acc: any, k) => (acc && typeof acc === 'object' && k in acc) ? acc[k] : undefined, form) ?? "-"
+                  ? field.key.split('.').reduce((acc: unknown, k: string) => (acc && typeof acc === 'object' && k in acc) ? (acc as Record<string, unknown>)[k] : undefined, form) ?? "-"
                   : "-";
                 return (
                 <TextField
@@ -548,7 +548,7 @@ function SeoPage() {
                   } else if (field.key) {
                     // Support nested fields for view
                     const value = typeof field.key === 'string'
-                      ? field.key.split('.').reduce((acc: any, k) => (acc && typeof acc === 'object' && k in acc) ? acc[k] : undefined, selectedSeo) ?? "-"
+                      ? field.key.split('.').reduce((acc: unknown, k: string) => (acc && typeof acc === 'object' && k in acc) ? (acc as Record<string, unknown>)[k] : undefined, selectedSeo) ?? "-"
                       : "-";
                     sectionFields.push(
                       <Box key={field.key} minWidth={180}>
@@ -558,11 +558,11 @@ function SeoPage() {
                             ? (value ? "Yes" : "No")
                             : Array.isArray(value)
                               ? value.join(", ")
-                              : (typeof value === "object" && value !== null && hasName(value))
-                                ? value.name
-                                : (typeof value === "object" && value !== null)
-                                  ? JSON.stringify(value)
-                                  : value}
+                              : (typeof value === "object" && value !== null)
+                                ? (hasName(value) ? value.name : JSON.stringify(value))
+                                : typeof value === "string" || typeof value === "number"
+                                  ? value
+                                  : String(value)}
                         </Typography>
                       </Box>
                     );

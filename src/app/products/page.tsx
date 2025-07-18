@@ -67,7 +67,7 @@ function getImageUrl(img: string | undefined): string | undefined {
 }
 
 function hasName(obj: unknown): obj is { name: string } {
-  return Boolean(obj && typeof obj === 'object' && 'name' in obj && typeof (obj as any).name === 'string');
+  return Boolean(obj && typeof obj === 'object' && 'name' in obj && typeof (obj as { name?: unknown }).name === 'string');
 }
 
 // Add a type guard for objects with a name property
