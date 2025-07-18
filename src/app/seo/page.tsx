@@ -97,6 +97,14 @@ interface Product {
   img?: string;
 }
 
+// Type guards for dynamic property access
+function hasName(obj: unknown): obj is { name: string } {
+  return Boolean(obj && typeof obj === 'object' && 'name' in obj && typeof (obj as any).name === 'string');
+}
+function hasImg(obj: unknown): obj is { img: string } {
+  return Boolean(obj && typeof obj === 'object' && 'img' in obj && typeof (obj as any).img === 'string');
+}
+
 function SeoPage() {
   const [seoList, setSeoList] = useState<Record<string, unknown>[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -138,36 +146,41 @@ function SeoPage() {
 
   // Handlers
   const handleOpen = (item?: Record<string, unknown>) => {
-    // @ts-expect-error TS cannot guarantee property exists on dynamic data
-    setEditId(item?._id || null);
-    // @ts-expect-error TS cannot guarantee property exists on dynamic data
-    setForm(item ? { ...item, product: item.product?._id || item.product } : {});
+    setEditId(item && typeof item._id === 'string' ? item._id : null);
+    setForm(item && typeof item === 'object' && item !== null ? {
+      ...item,
+      product:
+        item.product && typeof item.product === 'object' && item.product !== null && '_id' in item.product && typeof (item.product as any)._id === 'string'
+          ? (item.product as any)._id
+          : item.product
+    } : {});
     setOpen(true);
   };
   const handleClose = () => { setOpen(false); setEditId(null); setForm({}); };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    // @ts-expect-error TS cannot guarantee destructure on dynamic event
-    const { name, value, type, checked } = e.target;
+    const target = e.target as HTMLInputElement;
+    const { name, value, type, checked } = target;
     setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleProductChange = (_: React.SyntheticEvent, value: { label: string; value: string; img?: string } | null) => {
     const productId = value ? value.value : '';
-    // Find SEO for this product
-    // @ts-expect-error TS cannot guarantee property exists on dynamic data
-    const existingSeo = seoList.find(seo => seo.product && (seo.product._id === productId || seo.product === productId));
+    const existingSeo = seoList.find(seo =>
+      seo.product &&
+      typeof seo.product === 'object' &&
+      seo.product !== null &&
+      '_id' in seo.product &&
+      typeof (seo.product as any)._id === 'string' &&
+      ((seo.product as any)._id === productId)
+    );
     if (existingSeo) {
-      // Fill all fields except product
-      // @ts-expect-error TS cannot guarantee property exists on dynamic data
       const newForm: Record<string, unknown> = { product: productId };
       SEO_FIELDS.forEach(f => {
-        // @ts-expect-error TS cannot guarantee property exists on dynamic data
-        if (f.key !== 'product') newForm[f.key] = existingSeo[f.key] ?? '';
+        if (typeof f.key === 'string' && f.key !== 'product') newForm[f.key] = (existingSeo as Record<string, unknown>)[f.key] ?? '';
       });
       setForm(newForm);
     } else {
-      // Only update product, keep other fields as-is
       setForm((prev) => ({ ...prev, product: productId }));
     }
   };
@@ -214,7 +227,7 @@ function SeoPage() {
   };
 
   // Helper to get product image URL
-  function getProductImageUrl(product: Product | undefined): string | undefined {
+  function getProductImageUrl(product: { img?: string } | undefined): string | undefined {
     if (!product) return undefined;
     if (product.img && (product.img.startsWith('http://') || product.img.startsWith('https://'))) return product.img;
     if (product.img) return `${API_URL}/images/${product.img}`;
@@ -341,32 +354,27 @@ function SeoPage() {
               ) : seoList.length === 0 ? (
                 <TableRow><TableCell colSpan={7} align="center">No SEO entries found.</TableCell></TableRow>
               ) : seoList.map(seo => (
-                // @ts-expect-error TS cannot guarantee property exists on dynamic data
-                <TableRow key={seo._id} hover>
+                <TableRow key={typeof seo._id === 'string' ? seo._id : ''} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {/* @ts-expect-error TS cannot guarantee property exists on dynamic data */}
                       <Avatar
-                        src={seo.product?.img ? (seo.product.img.startsWith('http') ? seo.product.img : `${API_URL}/images/${seo.product.img}`) : undefined}
+                        src={hasImg(seo.product) ? (seo.product.img.startsWith('http') ? seo.product.img : `${API_URL}/images/${seo.product.img}`) : undefined}
                         sx={{ width: 32, height: 32, mr: 1 }}
                       >
-                        {/* @ts-expect-error TS cannot guarantee property exists on dynamic data */}
-                        {seo.product?.name?.[0] || '-'}
+                        {hasName(seo.product) ? seo.product.name[0] : '-'}
                       </Avatar>
-                      {/* @ts-expect-error TS cannot guarantee property exists on dynamic data */}
-                      {seo.product?.name || "-"}
+                      {hasName(seo.product) ? seo.product.name : "-"}
                     </Box>
                   </TableCell>
-                  <TableCell>{seo.slug}</TableCell>
-                  <TableCell>{seo.title}</TableCell>
+                  <TableCell>{typeof seo.slug === 'string' ? seo.slug : '-'}</TableCell>
+                  <TableCell>{typeof seo.title === 'string' ? seo.title : '-'}</TableCell>
                   <TableCell>{seo.popularproduct ? "Yes" : "No"}</TableCell>
                   <TableCell>{seo.topratedproduct ? "Yes" : "No"}</TableCell>
-                  <TableCell>{seo.rating_value ?? "-"}</TableCell>
+                  <TableCell>{typeof seo.rating_value === 'number' ? seo.rating_value : '-'}</TableCell>
                   <TableCell>
                     <IconButton color="primary" onClick={() => handleOpen(seo)} disabled={pageAccess === 'view'}><EditIcon /></IconButton>
                     <IconButton color="info" onClick={() => { setSelectedSeo(seo); setViewOpen(true); }}><VisibilityIcon /></IconButton>
-                    {/* @ts-expect-error TS cannot guarantee property exists on dynamic data */}
-                    <IconButton color="error" onClick={() => handleDelete(seo._id)} disabled={pageAccess === 'view'}><DeleteIcon /></IconButton>
+                    <IconButton color="error" onClick={() => typeof seo._id === 'string' && handleDelete(seo._id)} disabled={pageAccess === 'view'}><DeleteIcon /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -398,7 +406,6 @@ function SeoPage() {
               // Only use field.key as an index if it's defined
               if (field.type === "select") {
                 // Product field: use products list, no freeSolo
-                // @ts-expect-error TS cannot guarantee property exists on dynamic data
                 return (
                   <Autocomplete
                     key={field.key}
@@ -410,11 +417,15 @@ function SeoPage() {
                       return String(option);
                     }}
                     value={
-                      products.find(p => p._id === form[field.key])
-                        ? { label: products.find(p => p._id === form[field.key])?.name, value: form[field.key], img: products.find(p => p._id === form[field.key])?.img }
+                      products.find(p => typeof field.key === 'string' && p._id === form[field.key])
+                        ? {
+                            label: String(products.find(p => typeof field.key === 'string' && p._id === form[field.key])?.name ?? ''),
+                            value: String(typeof field.key === 'string' ? form[field.key] ?? '' : ''),
+                            img: products.find(p => typeof field.key === 'string' && p._id === form[field.key])?.img
+                          }
                         : null
                     }
-                    onChange={handleProductChange}
+                    onChange={(_event: React.SyntheticEvent, value: { label: string; value: string; img?: string } | null) => handleProductChange(_event, value)}
                     renderInput={(params) => (
                       <TextField {...params} label={field.label} name={field.key} required disabled={pageAccess === 'view'} />
                     )}
@@ -422,10 +433,10 @@ function SeoPage() {
                       <ListItem {...props} key={option.value || option.label}>
                         <ListItemAvatar>
                           <Avatar src={option.img ? (option.img.startsWith('http') ? option.img : `${API_URL}/images/${option.img}`) : undefined}>
-                            {option.label[0]}
+                            {typeof option.label === 'string' ? option.label[0] : '-'}
                           </Avatar>
                         </ListItemAvatar>
-                        <ListItemText primary={option.label} />
+                        <ListItemText primary={typeof option.label === 'string' ? option.label : '-'} />
                       </ListItem>
                     )}
                     disabled={pageAccess === 'view'}
@@ -433,7 +444,6 @@ function SeoPage() {
                   />
                 );
               } else if (field.type === "checkbox") {
-                // @ts-expect-error TS cannot guarantee property exists on dynamic data
                 return (
                 <FormControlLabel
                   key={field.key}
@@ -446,9 +456,9 @@ function SeoPage() {
               } else {
                 // Support nested fields (dot notation)
                 if (!field.key) return null;
-                // @ts-expect-error TS cannot guarantee property exists on dynamic data
-                const value = field.key.split('.').reduce((acc, k) => (acc && typeof acc === 'object' && k in acc) ? acc[k] : undefined, form) ?? "-";
-                // @ts-expect-error TS cannot guarantee property exists on dynamic data
+                const value = typeof field.key === 'string'
+                  ? field.key.split('.').reduce((acc: any, k) => (acc && typeof acc === 'object' && k in acc) ? acc[k] : undefined, form) ?? "-"
+                  : "-";
                 return (
                 <TextField
                   key={field.key}
@@ -465,7 +475,7 @@ function SeoPage() {
                           const k = keys[i];
                           if (typeof k !== 'string' || !k) continue;
                           if (!obj[k]) obj[k] = {};
-                          obj = obj[k];
+                          obj = obj[k] as Record<string, unknown>;
                         }
                         const lastKey = keys[keys.length - 1];
                         if (typeof lastKey === 'string' && lastKey) {
@@ -500,14 +510,14 @@ function SeoPage() {
               <Box display="flex" alignItems="center" gap={3} mb={4}>
                 <Avatar
                   variant="rounded"
-                  src={getProductImageUrl(selectedSeo.product)}
+                  src={hasImg(selectedSeo.product) ? getProductImageUrl(selectedSeo.product as { img?: string }) : undefined}
                   sx={{ width: 100, height: 100, mr: 2 }}
                 >
-                  {selectedSeo.product?.name?.[0] || "-"}
+                  {hasName(selectedSeo.product) ? selectedSeo.product.name[0] : "-"}
                 </Avatar>
                 <Box>
                   <Typography variant="h5" fontWeight={700} color="primary">
-                    {selectedSeo.product?.name || "-"}
+                    {hasName(selectedSeo.product) ? selectedSeo.product.name : "-"}
                   </Typography>
                   <Typography variant="subtitle2" color="textSecondary">
                     Product
@@ -517,8 +527,8 @@ function SeoPage() {
               {/* Group fields by section for display */}
               {(() => {
                 let currentSection: string | null = null;
-                let sectionFields: unknown[] = [];
-                const sections: unknown[] = [];
+                let sectionFields: React.ReactNode[] = [];
+                const sections: React.ReactNode[] = [];
                 SEO_FIELDS.forEach(field => {
                   if (field.section) {
                     if (sectionFields.length > 0 && currentSection !== null) {
@@ -537,7 +547,9 @@ function SeoPage() {
                     currentSection = field.section;
                   } else if (field.key) {
                     // Support nested fields for view
-                    const value = field.key.split('.').reduce((acc, k) => (acc && typeof acc === 'object' && k in acc) ? acc[k] : undefined, selectedSeo) ?? "-";
+                    const value = typeof field.key === 'string'
+                      ? field.key.split('.').reduce((acc: any, k) => (acc && typeof acc === 'object' && k in acc) ? acc[k] : undefined, selectedSeo) ?? "-"
+                      : "-";
                     sectionFields.push(
                       <Box key={field.key} minWidth={180}>
                         <Typography variant="subtitle2" color="textSecondary" fontWeight={600}>{field.label}</Typography>
@@ -546,7 +558,7 @@ function SeoPage() {
                             ? (value ? "Yes" : "No")
                             : Array.isArray(value)
                               ? value.join(", ")
-                              : (typeof value === "object" && value !== null && value.name)
+                              : (typeof value === "object" && value !== null && hasName(value))
                                 ? value.name
                                 : (typeof value === "object" && value !== null)
                                   ? JSON.stringify(value)

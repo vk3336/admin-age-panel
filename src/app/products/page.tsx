@@ -414,7 +414,7 @@ export default function ProductPage() {
   const filteredProducts = useCallback(() => {
     return products.filter(product => 
       product.name.toLowerCase().includes(search.toLowerCase()) ||
-      (product.category && typeof product.category === 'object' && product.category.name && product.category.name.toLowerCase().includes(search.toLowerCase()))
+      (hasName(product.category) && product.category.name.toLowerCase().includes(search.toLowerCase()))
     );
   }, [products, search]);
 
@@ -1136,7 +1136,6 @@ export default function ProductPage() {
                         {field.label}
                       </Typography>
                       <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>
-                        {/* @ts-expect-error: TypeScript cannot infer type after isNameObject guard, but this is safe */}
                         {isNameObject(value)
                           ? value.name || '-'
                           : value !== undefined && value !== null && typeof value !== 'object'
