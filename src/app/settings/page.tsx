@@ -1,13 +1,12 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
-  Card, CardContent, Typography, Box, Avatar, Switch, FormControlLabel, TextField, Button, Divider, Alert
+  Card, CardContent, Typography, Box, Avatar, Switch, FormControlLabel, TextField, Button, Alert
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SecurityIcon from '@mui/icons-material/Security';
 import PaletteIcon from '@mui/icons-material/Palette';
-import { cachedFetch } from '../../utils/performance';
 
 interface Settings {
   notifications: boolean;
@@ -56,7 +55,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSettingChange = useCallback((key: keyof Settings, value: any) => {
+  const handleSettingChange = useCallback((key: keyof Settings, value: unknown) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   }, []);
 
@@ -70,15 +69,7 @@ export default function SettingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [settings]);
-
-  const titleStyle = useMemo(() => ({
-    fontWeight: 700,
-    letterSpacing: 1,
-    background: 'linear-gradient(90deg,#396afc,#2948ff)',
-    WebkitBackgroundClip: 'text' as const,
-    WebkitTextFillColor: 'transparent' as const
-  }), []);
+  }, []);
 
   return (
     <main style={{ padding: 24 }}>
@@ -86,7 +77,7 @@ export default function SettingsPage() {
         <Avatar sx={{ bgcolor: 'primary.main', color: 'white', width: 56, height: 56 }}>
           <SettingsIcon sx={{ fontSize: 32 }} />
         </Avatar>
-        <Typography variant="h4" sx={titleStyle}>Settings</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 700, letterSpacing: 1, background: 'linear-gradient(90deg,#396afc,#2948ff)', WebkitBackgroundClip: 'text' as const, WebkitTextFillColor: 'transparent' as const }}>Settings</Typography>
       </Box>
 
       {saved && (

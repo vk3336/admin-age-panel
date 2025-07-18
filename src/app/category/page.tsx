@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Card, 
   CardContent, 
@@ -295,12 +295,6 @@ const CategoryForm = React.memo(({
 
 CategoryForm.displayName = 'CategoryForm';
 
-// Helper to get current logged-in admin email from localStorage
-function getCurrentAdminEmail() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin-email');
-}
-
 function getCategoryPagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
@@ -313,7 +307,7 @@ function getCategoryPagePermission() {
   return adminPerm?.filterPermission || 'denied';
 }
 
-function isFile(value: any): value is File {
+function isFile(value: unknown): value is File {
   return typeof File !== 'undefined' && value instanceof File;
 }
 
@@ -327,20 +321,16 @@ export default function CategoryPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchCategories = useCallback(async () => {
-    setLoading(true);
     try {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category`);
       setCategories(data.data || []);
     } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -366,7 +356,7 @@ export default function CategoryPage() {
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setForm((prev) => ({ ...prev, image: file as any }));
+      setForm((prev) => ({ ...prev, image: file as File }));
       setImagePreview(URL.createObjectURL(file));
     }
   }, []);
@@ -409,9 +399,7 @@ export default function CategoryPage() {
       }
       setDeleteId(null);
       fetchCategories();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the category.");
-    }
+    } catch {}
   }, [deleteId, fetchCategories]);
 
   const handleEdit = useCallback((category: Category) => {

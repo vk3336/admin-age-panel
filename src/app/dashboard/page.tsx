@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -7,8 +7,6 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
-import Divider from '@mui/material/Divider';
 import Chip from '@mui/material/Chip';
 import LinearProgress from '@mui/material/LinearProgress';
 import Table from '@mui/material/Table';
@@ -18,10 +16,9 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
-import { keyframes } from '@mui/system';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
-import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CategoryIcon from '@mui/icons-material/Category';
 import PaletteIcon from '@mui/icons-material/Palette';
@@ -33,27 +30,8 @@ import ArchitectureIcon from '@mui/icons-material/Architecture';
 import LayersIcon from '@mui/icons-material/Layers';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import BusinessIcon from '@mui/icons-material/Business';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-
-const filterModels = [
-  { key: 'category', label: 'Categories', icon: <CategoryIcon />, color: '#7367f0', count: 0 },
-  { key: 'color', label: 'Colors', icon: <PaletteIcon />, color: '#ea5455', count: 0 },
-  { key: 'content', label: 'Contents', icon: <ArticleIcon />, color: '#ff9f43', count: 0 },
-  { key: 'design', label: 'Designs', icon: <BrushIcon />, color: '#28c76f', count: 0 },
-  { key: 'finish', label: 'Finishes', icon: <CheckCircleIcon />, color: '#00cfe8', count: 0 },
-  { key: 'groupcode', label: 'Groupcodes', icon: <CodeIcon />, color: '#9c8cfc', count: 0 },
-  { key: 'structure', label: 'Structures', icon: <ArchitectureIcon />, color: '#ff6b6b', count: 0 },
-  { key: 'subfinish', label: 'Subfinishes', icon: <LayersIcon />, color: '#4ecdc4', count: 0 },
-  { key: 'substructure', label: 'Substructures', icon: <ArchitectureIcon />, color: '#45b7d1', count: 0 },
-  { key: 'subsuitable', label: 'Subsuitables', icon: <ThumbUpIcon />, color: '#96ceb4', count: 0 },
-  { key: 'suitablefor', label: 'Suitablefors', icon: <ThumbUpIcon />, color: '#feca57', count: 0 },
-  { key: 'vendor', label: 'Vendors', icon: <BusinessIcon />, color: '#ff9ff3', count: 0 },
-];
+import { keyframes } from '@mui/system';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -61,14 +39,11 @@ const fadeIn = keyframes`
 `;
 
 // DattaAble styled components
-const StatCard = React.memo(({ title, value, subtitle, icon, color, trend, trendValue }: {
-  title: string;
+const StatCard = React.memo(({ value, subtitle, icon, color }: {
   value: string | number;
   subtitle: string;
   icon: React.ReactNode;
   color: string;
-  trend?: 'up' | 'down';
-  trendValue?: number;
 }) => {
   return (
     <Card sx={{
@@ -306,8 +281,6 @@ export default function DashboardPage() {
   const [productCount, setProductCount] = useState<number>(0);
   const [seoCount, setSeoCount] = useState<number>(0);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const allowEmail = process.env.NEXT_PUBLIC_ALLOW_EMAIL || "";
-  const adminCount = allowEmail.split(",").map(e => e.trim()).filter(Boolean).length;
 
   useEffect(() => {
     const checkAuth = () => {
@@ -436,7 +409,8 @@ export default function DashboardPage() {
       {/* Main Cards */}
       <Grid container spacing={3}>
         {cardData.map((card, idx) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={card.title + idx}>
+          // @ts-expect-error MUI Grid type workaround
+          <Grid component="div" item xs={12} sm={6} md={4} lg={3} key={card.title + idx}>
             <Card
               sx={{
                 background: 'background.paper',

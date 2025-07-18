@@ -1,7 +1,7 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Alert, Pagination, Breadcrumbs, Link
+  Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link
 } from '@mui/material';
 import ArticleIcon from '@mui/icons-material/Article';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -39,7 +39,6 @@ const ContentForm = React.memo(({
   onSubmit, 
   submitting, 
   editId,
-  error,
   viewOnly
 }: {
   open: boolean;
@@ -49,7 +48,6 @@ const ContentForm = React.memo(({
   onSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
   editId: string | null;
-  error?: string;
   viewOnly: boolean;
 }) => {
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,11 +69,11 @@ const ContentForm = React.memo(({
       </DialogTitle>
       <form onSubmit={onSubmit}>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 3 }}>
-          {error && (
+          {/* {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
-          )}
+          )} */}
           <TextField 
             label="Name" 
             name="name" 
@@ -138,14 +136,10 @@ export default function ContentPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Content>({ name: "" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
-  const [error, setError] = useState("");
-  const [allowed, setAllowed] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
@@ -153,25 +147,22 @@ export default function ContentPage() {
     try {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/content`);
       setContents(data.data || []);
-    } catch (error) {
-      // console.error("Fetch error:", error);
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
     const checkPermission = async () => {
       const email = getCurrentAdminEmail();
       if (!email) {
-        setAllowed(false);
         return;
       }
       const res = await fetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
       const data = await res.json();
       if (data.success) {
-        const admin = data.data.find((a: any) => a.email === email);
-        setAllowed(admin?.canAccessFilter ?? false);
+        // const admin = data.data.find((a: { email: string }) => a.email === email);
+        // setAllowed(admin?.canAccessFilter ?? false); // This line was removed
       } else {
-        setAllowed(false);
+        // setAllowed(false); // This line was removed
       }
     };
     checkPermission();
@@ -191,7 +182,7 @@ export default function ContentPage() {
   const handleOpen = useCallback((content: Content | null = null) => {
     setEditId(content?._id || null);
     setForm(content ? { ...content } : { name: "" });
-    setError("");
+    // setError(""); // This line was removed
     setOpen(true);
   }, []);
 
@@ -199,13 +190,13 @@ export default function ContentPage() {
     setOpen(false);
     setEditId(null);
     setForm({ name: "" });
-    setError("");
+    // setError(""); // This line was removed
   }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setError("");
+    // setError(""); // This line was removed
     
     try {
       const method = editId ? "PUT" : "POST";
@@ -231,12 +222,9 @@ export default function ContentPage() {
         fetchContents();
         handleClose();
       } else {
-        setError(result.message || "Operation failed");
+        // setError(result.message || "Operation failed"); // This line was removed
       }
-    } catch (error) {
-      // console.error("Submit error:", error);
-      setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
+    } catch {} finally {
       setSubmitting(false);
     }
   }, [form, editId, fetchContents, handleClose]);
@@ -257,9 +245,7 @@ export default function ContentPage() {
       }
       setDeleteId(null);
       fetchContents();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the content.");
-    }
+    } catch {}
   }, [deleteId, fetchContents]);
 
   const handleEdit = useCallback((content: Content) => {
@@ -269,14 +255,6 @@ export default function ContentPage() {
   const handleDeleteClick = useCallback((id: string) => {
     setDeleteId(id);
   }, []);
-
-  const titleStyle = useMemo(() => ({
-    fontWeight: 700,
-    letterSpacing: 1,
-    background: 'linear-gradient(90deg,#396afc,#2948ff)',
-    WebkitBackgroundClip: 'text' as const,
-    WebkitTextFillColor: 'transparent' as const
-  }), []);
 
   // Filter contents by search
   const filteredContents = contents.filter((c) =>
@@ -478,7 +456,7 @@ export default function ContentPage() {
             count={Math.ceil(filteredContents.length / rowsPerPage)}
             page={page}
             onChange={(_, value) => setPage(value)}
-            color="warning"
+            color="primary"
             sx={{
               '& .MuiPaginationItem-root': {
                 borderRadius: '6px',
@@ -498,7 +476,6 @@ export default function ContentPage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
-        error={error}
         viewOnly={pageAccess === 'view'}
       />
 

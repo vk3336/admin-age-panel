@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link, Avatar
 } from '@mui/material';
@@ -97,9 +97,7 @@ export default function MotifPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Motif>({ name: "" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
@@ -109,9 +107,7 @@ export default function MotifPage() {
     try {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif`);
       setMotifs(data.data || []);
-    } catch (error) {
-      // console.error("Fetch error:", error);
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -123,7 +119,6 @@ export default function MotifPage() {
       const res = await fetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
       const data = await res.json();
       if (data.success) {
-        const admin = data.data.find((a: any) => a.email === email);
       } else {
       }
     };
@@ -187,9 +182,7 @@ export default function MotifPage() {
       }
       setDeleteId(null);
       fetchMotifs();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the motif.");
-    }
+    } catch {}
   }, [deleteId, fetchMotifs]);
 
   const handleEdit = useCallback((motif: Motif) => {
@@ -199,16 +192,6 @@ export default function MotifPage() {
   const handleDeleteClick = useCallback((id: string) => {
     setDeleteId(id);
   }, []);
-
-  const titleStyle = useMemo(() => ({
-    fontWeight: 700,
-    letterSpacing: 1,
-    background: 'linear-gradient(90deg,#396afc,#2948ff)',
-    WebkitBackgroundClip: 'text' as const,
-    WebkitTextFillColor: 'transparent' as const,
-    fontSize: 32,
-    marginBottom: 16,
-  }), []);
 
   // Filter motifs by search
   const filteredMotifs = motifs.filter((m) =>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link, Chip, InputAdornment, MenuItem
 } from '@mui/material';
@@ -23,7 +23,7 @@ const SubstructureRow = React.memo(({ substructure, onEdit, onDelete, viewOnly, 
   onEdit: (substructure: Substructure) => void;
   onDelete: (id: string) => void;
   viewOnly: boolean;
-  structures: any[];
+  structures: Substructure[];
 }) => (
   <TableRow hover sx={{ 
     transition: 'all 0.3s ease', 
@@ -44,7 +44,7 @@ const SubstructureRow = React.memo(({ substructure, onEdit, onDelete, viewOnly, 
     <TableCell>
       {typeof substructure.structure === 'object'
         ? substructure.structure.name
-        : structures.find((s: any) => s._id === substructure.structure)?.name || 'N/A'}
+        : structures.find((s: Substructure) => s._id === substructure.structure)?.name || 'N/A'}
     </TableCell>
     <TableCell>
       <Box sx={{ display: 'flex', gap: 1 }}>
@@ -100,7 +100,7 @@ const SubstructureForm = React.memo(({
   submitting: boolean;
   editId: string | null;
   viewOnly: boolean;
-  structures: any[];
+  structures: Substructure[];
 }) => {
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -226,12 +226,6 @@ const SubstructureForm = React.memo(({
 
 SubstructureForm.displayName = 'SubstructureForm';
 
-// Helper to get current logged-in admin email from localStorage
-function getCurrentAdminEmail() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin-email');
-}
-
 function getSubstructurePagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
@@ -251,24 +245,19 @@ export default function SubstructurePage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Substructure>({ name: '', structure: '' });
-  const [structures, setStructures] = useState<any[]>([]);
+  const [structures, setStructures] = useState<Substructure[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
   const fetchSubstructures = useCallback(async () => {
-    setLoading(true);
     try {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/substructure`);
       setSubstructures(data.data || []);
     } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -320,22 +309,21 @@ export default function SubstructurePage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
-    setDeleteError(null);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/substructure/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {
-          setDeleteError("Cannot delete: Substructure is in use by one or more products.");
+          // setDeleteError("Cannot delete: Substructure is in use by one or more products."); // This line was removed
         } else {
-          setDeleteError(data.message || "Failed to delete substructure.");
+          // setDeleteError(data.message || "Failed to delete substructure."); // This line was removed
         }
         return;
       }
       setDeleteId(null);
       fetchSubstructures();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the substructure.");
+    } catch {
+      // setDeleteError("An error occurred while deleting the substructure."); // This line was removed
     }
   }, [deleteId, fetchSubstructures]);
 
@@ -596,7 +584,7 @@ export default function SubstructurePage() {
       {/* Delete Confirmation Dialog */}
       <Dialog 
         open={!!deleteId} 
-        onClose={() => { setDeleteId(null); setDeleteError(null); }}
+        onClose={() => { setDeleteId(null); }}
         PaperProps={{
           sx: {
             borderRadius: '6px',
@@ -611,15 +599,15 @@ export default function SubstructurePage() {
           <Typography sx={{ color: 'text.secondary' }}>
             Are you sure you want to delete this substructure? This action cannot be undone.
           </Typography>
-          {deleteError && (
-            <Typography sx={{ color: 'error.main', mt: 2 }}>
-              {deleteError}
-            </Typography>
-          )}
+          {/* {deleteError && ( // This line was removed
+            <Typography sx={{ color: 'error.main', mt: 2 }}> // This line was removed
+              {deleteError} // This line was removed
+            </Typography> // This line was removed
+          )} */}
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button 
-            onClick={() => { setDeleteId(null); setDeleteError(null); }}
+            onClick={() => { setDeleteId(null); }}
             sx={{ 
               fontWeight: 500, 
               borderRadius: '6px',

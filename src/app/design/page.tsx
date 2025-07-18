@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link
 } from '@mui/material';
@@ -50,7 +50,7 @@ const DesignForm = React.memo(({
   editId: string | null;
   viewOnly: boolean;
 }) => {
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   }, [form, setForm]);
 
@@ -97,22 +97,18 @@ export default function DesignPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Design>({ name: "" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
-  const fetchDesigns = useCallback(async () => {
+  const fetchDesigns = React.useCallback(async () => {
     try {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/design`);
       setDesigns(data.data || []);
-    } catch (error) {
-      // console.error("Fetch error:", error);
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -125,7 +121,7 @@ export default function DesignPage() {
       const res = await fetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
       const data = await res.json();
       if (data.success) {
-        const admin = data.data.find((a: any) => a.email === email);
+        // const admin = data.data.find((a: { email: string }) => a.email === email);
         // setAllowed(admin?.canAccessFilter ?? false);
       } else {
         // setAllowed(false);
@@ -145,19 +141,19 @@ export default function DesignPage() {
     setPageAccess(getDesignPagePermission());
   }, [fetchDesigns]);
 
-  const handleOpen = useCallback((design: Design | null = null) => {
+  const handleOpen = React.useCallback((design: Design | null = null) => {
     setEditId(design?._id || null);
     setForm(design ? { ...design } : { name: "" });
     setOpen(true);
   }, []);
 
-  const handleClose = useCallback(() => {
+  const handleClose = React.useCallback(() => {
     setOpen(false);
     setEditId(null);
     setForm({ name: "" });
   }, []);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = React.useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
@@ -175,7 +171,7 @@ export default function DesignPage() {
     }
   }, [form, editId, fetchDesigns, handleClose]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = React.useCallback(async () => {
     if (!deleteId) return;
     setDeleteError(null);
     try {
@@ -191,26 +187,16 @@ export default function DesignPage() {
       }
       setDeleteId(null);
       fetchDesigns();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the design.");
-    }
+    } catch {}
   }, [deleteId, fetchDesigns]);
 
-  const handleEdit = useCallback((design: Design) => {
+  const handleEdit = React.useCallback((design: Design) => {
     handleOpen(design);
   }, [handleOpen]);
 
-  const handleDeleteClick = useCallback((id: string) => {
+  const handleDeleteClick = React.useCallback((id: string) => {
     setDeleteId(id);
   }, []);
-
-  const titleStyle = useMemo(() => ({
-    fontWeight: 700,
-    letterSpacing: 1,
-    background: 'linear-gradient(90deg,#396afc,#2948ff)',
-    WebkitBackgroundClip: 'text' as const,
-    WebkitTextFillColor: 'transparent' as const
-  }), []);
 
   // Filter designs by search
   const filteredDesigns = designs.filter((d) =>

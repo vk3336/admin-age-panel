@@ -4,18 +4,8 @@ import {
   Box,
   Typography,
   Paper,
-  List,
-  Card,
-  CardContent,
   Avatar,
-  Divider,
-  Stack,
-  FormControlLabel,
-  Checkbox,
   Chip,
-  Tooltip,
-  Fade,
-  CircularProgress,
   Alert,
   MenuItem,
   FormControl,
@@ -24,10 +14,9 @@ import {
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
-import Grid from '@mui/material/Grid';
 import SearchIcon from '@mui/icons-material/Search';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
+import CircularProgress from '@mui/material/CircularProgress';
+import Checkbox from '@mui/material/Checkbox';
 
 const AdminRestrictionPage = () => {
   // All hooks at the top
@@ -58,7 +47,7 @@ const AdminRestrictionPage = () => {
   // Save permissions to localStorage whenever admins change
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const perms = {};
+      const perms: { [key: string]: { filterPermission: string; productPermission: string; seoPermission: string } } = {};
       admins.forEach(a => {
         perms[a.email] = {
           filterPermission: a.filterPermission,

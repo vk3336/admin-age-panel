@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link, Chip, InputAdornment
 } from '@mui/material';
@@ -11,7 +11,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { cachedFetch } from '../../utils/performance';
+import Image from 'next/image';
 
 interface Groupcode {
   _id?: string;
@@ -90,31 +90,24 @@ const GroupcodeRow = React.memo(({ groupcode, onEdit, onDelete, onView, viewOnly
 
 GroupcodeRow.displayName = 'GroupcodeRow';
 
-const GroupcodeForm = React.memo(({ 
-  open, 
-  onClose, 
-  form, 
-  setForm, 
-  onSubmit, 
-  submitting, 
-  editId, 
-  viewOnly
-}: {
+interface GroupcodeFormProps {
   open: boolean;
   onClose: () => void;
-  form: Groupcode;
-  setForm: (form: Groupcode) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  submitting: boolean;
   editId: string | null;
   viewOnly: boolean;
-}) => {
-  const imgInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const [imgPreview, setImgPreview] = useState<string | null>(form.img ? (typeof form.img === 'string' ? form.img : null) : null);
-  const [videoPreview, setVideoPreview] = useState<string | null>(form.video ? (typeof form.video === 'string' ? form.video : null) : null);
+  submitting: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  initialData?: Groupcode;
+}
+
+const GroupcodeForm = React.memo(({ open, onClose, editId, initialData, submitting, onSubmit, viewOnly }: GroupcodeFormProps) => {
+  const [form, setForm] = useState<Groupcode>(initialData || { name: "" });
+  const [imgPreview, setImgPreview] = useState<string | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [imgDims, setImgDims] = useState<[number, number] | undefined>(undefined);
   const [videoDims, setVideoDims] = useState<[number, number] | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (typeof form.img === 'string') setImgPreview(form.img);
@@ -180,10 +173,10 @@ const GroupcodeForm = React.memo(({
             <Box sx={{ textAlign: 'center', minWidth: 160 }}>
               <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block', letterSpacing: 0.5 }}>Image</Typography>
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 style={{ display: 'none' }}
-                ref={imgInputRef}
                 onChange={e => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -194,7 +187,7 @@ const GroupcodeForm = React.memo(({
               />
               <Button
                 variant="outlined"
-                onClick={() => imgInputRef.current?.click()}
+                onClick={() => fileInputRef.current?.click()}
                 sx={{
                   borderRadius: '8px',
                   borderColor: '#bdc3c7',
@@ -214,9 +207,11 @@ const GroupcodeForm = React.memo(({
               </Button>
               {imgPreview && (
                 <Box sx={{ mt: 1, textAlign: 'center' }}>
-                  <img
+                  <Image
                     src={imgPreview}
                     alt="Preview"
+                    width={120}
+                    height={120}
                     style={{ maxWidth: 120, borderRadius: 8, border: '1px solid #e0e0e0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
                     onLoad={e => {
                       const target = e.target as HTMLImageElement;
@@ -235,10 +230,10 @@ const GroupcodeForm = React.memo(({
             <Box sx={{ textAlign: 'center', minWidth: 160 }}>
               <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block', letterSpacing: 0.5 }}>Video</Typography>
               <input
+                ref={videoInputRef}
                 type="file"
                 accept="video/*"
                 style={{ display: 'none' }}
-                ref={videoInputRef}
                 onChange={e => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -330,12 +325,6 @@ const GroupcodeForm = React.memo(({
 
 GroupcodeForm.displayName = 'GroupcodeForm';
 
-// Helper to get current logged-in admin email from localStorage
-function getCurrentAdminEmail() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin-email');
-}
-
 function getGroupcodePagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
@@ -357,18 +346,9 @@ export default function GroupcodePage() {
   const [form, setForm] = useState<Groupcode>({ name: "" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
-  // Add state for image/video and previews
-  // const [imgPreview, setImgPreview] = useState<string | null>(null);
-  // const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  // const [imgDims, setImgDims] = useState<[number, number] | undefined>(undefined);
-  // const [videoDims, setVideoDims] = useState<[number, number] | undefined>(undefined);
-  // const imgInputRef = useRef<HTMLInputElement>(null);
-  // const videoInputRef = useRef<HTMLInputElement>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [viewGroupcode, setViewGroupcode] = useState<Groupcode | null>(null);
   const [imgDims, setImgDims] = useState<[number, number] | undefined>(undefined);
@@ -380,13 +360,12 @@ export default function GroupcodePage() {
   }
 
   const fetchGroupcodes = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode`);
       const data = await res.json();
       setGroupcodes(data.data || []);
     } finally {
-      setLoading(false);
+      // setLoading(false); // Removed loading state
     }
   }, []);
 
@@ -459,9 +438,7 @@ export default function GroupcodePage() {
       }
       setDeleteId(null);
       fetchGroupcodes();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the groupcode.");
-    }
+    } catch {}
   }, [deleteId, fetchGroupcodes]);
 
   const handleEdit = useCallback((groupcode: Groupcode) => {
@@ -717,12 +694,11 @@ export default function GroupcodePage() {
       <GroupcodeForm
         open={open}
         onClose={handleClose}
-        form={form}
-        setForm={setForm}
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
         viewOnly={pageAccess === 'view'}
+        initialData={form}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -811,9 +787,11 @@ export default function GroupcodePage() {
                 {viewGroupcode.img && (
                   <Box sx={{ textAlign: 'center', minWidth: 160 }}>
                     <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block', letterSpacing: 0.5 }}>Image</Typography>
-                    <img
+                    <Image
                       src={viewGroupcode.img}
                       alt="Groupcode Image"
+                      width={220}
+                      height={220}
                       style={{ maxWidth: 220, borderRadius: 8, border: '1px solid #e0e0e0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
                       onLoad={e => {
                         const target = e.target as HTMLImageElement;

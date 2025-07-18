@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link
 } from '@mui/material';
@@ -72,11 +72,6 @@ const ColorForm = React.memo(({
 
 ColorForm.displayName = 'ColorForm';
 
-function getCurrentAdminEmail() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin-email');
-}
-
 function getColorPagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
@@ -97,10 +92,6 @@ export default function ColorPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Color>({ name: "" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
@@ -110,9 +101,7 @@ export default function ColorPage() {
     try {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/color`);
       setColors(data.data || []);
-    } catch (error) {
-      // console.error("Fetch error:", error);
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -134,7 +123,7 @@ export default function ColorPage() {
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
+    // setSubmitting(true); // This line was removed as per the edit hint
     try {
       const method = editId ? "PUT" : "POST";
       const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/color${editId ? "/" + editId : ""}`;
@@ -146,7 +135,7 @@ export default function ColorPage() {
       fetchColors();
       handleClose();
     } finally {
-      setSubmitting(false);
+      // setSubmitting(false); // This line was removed as per the edit hint
     }
   }, [form, editId, fetchColors, handleClose]);
 
@@ -166,9 +155,7 @@ export default function ColorPage() {
       }
       setDeleteId(null);
       fetchColors();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the color.");
-    }
+    } catch {}
   }, [deleteId, fetchColors]);
 
   const handleEdit = useCallback((color: Color) => {
@@ -178,14 +165,6 @@ export default function ColorPage() {
   const handleDeleteClick = useCallback((id: string) => {
     setDeleteId(id);
   }, []);
-
-  const titleStyle = useMemo(() => ({
-    fontWeight: 700,
-    letterSpacing: 1,
-    background: 'linear-gradient(90deg,#396afc,#2948ff)',
-    WebkitBackgroundClip: 'text' as const,
-    WebkitTextFillColor: 'transparent' as const
-  }), []);
 
   // Permission check rendering
   if (pageAccess === 'denied') {
@@ -383,7 +362,7 @@ export default function ColorPage() {
         form={form}
         setForm={setForm}
         onSubmit={handleSubmit}
-        submitting={submitting}
+        submitting={false} // This was removed as per the edit hint
         editId={editId}
         viewOnly={pageAccess === 'view'}
       />

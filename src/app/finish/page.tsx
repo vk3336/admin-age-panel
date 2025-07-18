@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link
 } from '@mui/material';
@@ -73,11 +73,6 @@ const FinishForm = React.memo(({
 
 FinishForm.displayName = 'FinishForm';
 
-function getCurrentAdminEmail() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin-email');
-}
-
 function getFinishPagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
@@ -98,9 +93,7 @@ export default function FinishPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Finish>({ name: "" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
@@ -111,9 +104,7 @@ export default function FinishPage() {
     try {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish`);
       setFinishes(data.data || []);
-    } catch (error) {
-      // console.error("Fetch error:", error);
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -173,9 +164,7 @@ export default function FinishPage() {
       }
       setDeleteId(null);
       fetchFinishes();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the finish.");
-    }
+    } catch {}
   }, [deleteId, fetchFinishes]);
 
   const handleEdit = useCallback((finish: Finish) => {
@@ -185,14 +174,6 @@ export default function FinishPage() {
   const handleDeleteClick = useCallback((id: string) => {
     setDeleteId(id);
   }, []);
-
-  const titleStyle = useMemo(() => ({
-    fontWeight: 700,
-    letterSpacing: 1,
-    background: 'linear-gradient(90deg,#396afc,#2948ff)',
-    WebkitBackgroundClip: 'text' as const,
-    WebkitTextFillColor: 'transparent' as const
-  }), []);
 
   // Filter finishes by search
   const filteredFinishes = finishes.filter((f) =>

@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
+  
   images: {
     domains: ['localhost'],
     formats: ['image/webp', 'image/avif'],

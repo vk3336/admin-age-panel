@@ -1,7 +1,7 @@
 // Performance optimization utilities
 
 // Cache for API responses
-const cache = new Map<string, { data: any; timestamp: number }>();
+const cache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Optimized fetch with caching
@@ -31,7 +31,7 @@ export const batchFetch = async (urls: string[]) => {
 };
 
 // Debounce function for search inputs
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
@@ -43,7 +43,7 @@ export const debounce = <T extends (...args: any[]) => any>(
 };
 
 // Throttle function for scroll events
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): ((...args: Parameters<T>) => void) => {
@@ -61,14 +61,14 @@ export const throttle = <T extends (...args: any[]) => any>(
 export const memoizedFilter = <T>(
   array: T[],
   predicate: (item: T) => boolean,
-  deps: any[] = []
+  deps: unknown[] = []
 ): T[] => {
   const key = JSON.stringify(deps);
   const cacheKey = `filter-${key}`;
   const cached = cache.get(cacheKey);
   
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data;
+    return cached.data as T[];
   }
   
   const result = array.filter(predicate);

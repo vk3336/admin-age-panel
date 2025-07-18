@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link, Chip, InputAdornment
 } from '@mui/material';
@@ -185,12 +185,6 @@ const StructureForm = React.memo(({
 
 StructureForm.displayName = 'StructureForm';
 
-// Helper to get current logged-in admin email from localStorage
-function getCurrentAdminEmail() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin-email');
-}
-
 function getStructurePagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
@@ -212,20 +206,16 @@ export default function StructurePage() {
   const [form, setForm] = useState<Structure>({ name: "" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchStructures = useCallback(async () => {
-    setLoading(true);
     try {
       const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/structure`);
       setStructures(data.data || []);
     } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -280,9 +270,7 @@ export default function StructurePage() {
       }
       setDeleteId(null);
       fetchStructures();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the structure.");
-    }
+    } catch {}
   }, [deleteId, fetchStructures]);
 
   const handleEdit = useCallback((structure: Structure) => {

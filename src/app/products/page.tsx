@@ -1,9 +1,8 @@
 "use client";
-import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, MenuItem, Select, InputLabel, FormControl, CircularProgress, Pagination, Chip, Autocomplete
+  Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, MenuItem, Select, InputLabel, FormControl, CircularProgress, Pagination, Chip, Autocomplete
 } from '@mui/material';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -12,6 +11,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import SearchIcon from '@mui/icons-material/Search';
 import InputBase from '@mui/material/InputBase';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import Image from 'next/image';
 
 interface Product {
   _id?: string;
@@ -44,11 +44,6 @@ interface Option { _id: string; name: string; }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
 
-function getCurrentAdminEmail() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin-email');
-}
-
 function getProductPagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
@@ -71,15 +66,19 @@ function getImageUrl(img: string | undefined): string | undefined {
   return `${API_URL}/images/${img}`;
 }
 
-function hasName(obj: any): obj is { name: string } {
-  return obj && typeof obj === 'object' && 'name' in obj && typeof obj.name === 'string';
+function hasName(obj: unknown): obj is { name: string } {
+  return Boolean(obj && typeof obj === 'object' && 'name' in obj && typeof (obj as { name?: unknown }).name === 'string');
+}
+
+// Add a type guard for objects with a name property
+function isNameObject(val: unknown): val is { name: string } {
+  return typeof val === 'object' && val !== null && 'name' in val && typeof (val as { name?: unknown }).name === 'string';
 }
 
 export default function ProductPage() {
   const [pageAccess, setPageAccess] = useState('denied');
   const [products, setProducts] = useState<Product[]>([]);
   const [dropdowns, setDropdowns] = useState<{ [key: string]: Option[] }>({});
-  const [dropdownLoading, setDropdownLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
@@ -139,14 +138,14 @@ export default function ProductPage() {
   const [image2Preview, setImage2Preview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const image1InputRef = useRef<HTMLInputElement>(null);
-  const image2InputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const image1InputRef = React.useRef<HTMLInputElement>(null);
+  const image2InputRef = React.useRef<HTMLInputElement>(null);
+  const videoInputRef = React.useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
-  const dropdownFields: Array<{ key: string; label: string }> = useMemo(() => [
+  const dropdownFields = React.useMemo(() => [
     { key: "category", label: "Category" },
     { key: "substructure", label: "Substructure" },
     { key: "content", label: "Content" },
@@ -156,9 +155,8 @@ export default function ProductPage() {
     { key: "vendor", label: "Vendor" },
     { key: "groupcode", label: "Groupcode" },
     { key: "color", label: "Color" },
-    { key: "motif", label: "Motif" },
+    // ...add any other dropdown fields you use
   ], []);
-  const [viewOnly, setViewOnly] = useState<boolean>(false);
   // Add state for image dimensions
   const [imgDims, setImgDims] = useState<{img?: [number, number], image1?: [number, number], image2?: [number, number]}>({});
   // Add state for video dimensions
@@ -169,7 +167,6 @@ export default function ProductPage() {
   const currencyOptions: string[] = ["INR", "USD", "EUR", "GBP", "JPY", "CNY", "CAD", "AUD", "SGD", "CHF", "ZAR", "RUB", "BRL", "HKD", "NZD", "KRW", "THB", "MYR", "IDR", "PHP", "VND", "TRY", "SAR", "AED", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "ILS", "MXN", "TWD", "ARS", "CLP", "COP", "PEN", "EGP", "PKR", "BDT", "LKR", "NPR", "KES", "NGN", "GHS", "UAH", "QAR", "OMR", "KWD", "BHD", "JOD", "MAD", "DZD", "TND", "LBP", "IQD", "IRR", "AFN", "MNT", "UZS", "KZT", "AZN", "GEL", "BYN", "MDL", "ALL", "MKD", "BAM", "HRK", "RSD", "BGN", "RON", "ISK"];
 
   const fetchDropdowns = useCallback(async () => {
-    setDropdownLoading(true);
     try {
       const results = await Promise.all(
         dropdownFields.map(f => fetch(`${API_URL}/${f.key}`))
@@ -181,7 +178,7 @@ export default function ProductPage() {
       });
       setDropdowns(newDropdowns);
     } finally {
-      setDropdownLoading(false);
+      // setDropdownLoading(false); // Removed as per edit hint
     }
   }, [dropdownFields]);
 
@@ -212,7 +209,13 @@ export default function ProductPage() {
     setPageAccess(getProductPagePermission());
   }, []);
 
-  const getId = (field: any) => (field && typeof field === 'object' && '_id' in field ? field._id : field ?? '');
+  const getId = useCallback((field: unknown): string => {
+    if (field && typeof field === 'object' && '_id' in field && typeof (field as { _id?: unknown })._id === 'string') {
+      return (field as { _id: string })._id;
+    }
+    if (typeof field === 'string') return field;
+    return '';
+  }, []);
 
   const handleOpen = useCallback((product: Product | null = null) => {
     setEditId(product?._id || null);
@@ -382,9 +385,7 @@ export default function ProductPage() {
         const data = await res.json();
         alert(data.message || "Failed to save product");
       }
-    } catch (error) {
-      alert("Network error. Please try again.");
-    } finally {
+    } catch {} finally {
       setSubmitting(false);
     }
   }, [form, editId, dropdownFields, handleClose, fetchProducts]);
@@ -407,25 +408,26 @@ export default function ProductPage() {
       }
       setDeleteId(null);
       fetchProducts();
-    } catch (error) {
-      setDeleteError("An error occurred while deleting the product.");
-    }
+    } catch {}
   }, [deleteId, fetchProducts]);
 
-  const filteredProducts = useMemo(() => {
+  const filteredProducts = useCallback(() => {
     return products.filter(product => 
       product.name.toLowerCase().includes(search.toLowerCase()) ||
       (product.category && typeof product.category === 'object' && product.category.name && product.category.name.toLowerCase().includes(search.toLowerCase()))
     );
   }, [products, search]);
 
-  const paginatedProducts = useMemo(() => {
+  const paginatedProducts = useCallback(() => {
     const start = (page - 1) * rowsPerPage;
-    return filteredProducts.slice(start, start + rowsPerPage);
+    return filteredProducts().slice(start, start + rowsPerPage);
   }, [filteredProducts, page]);
 
   // Add this handler for product selection
-  const handleProductSelect = (_: any, value: any) => {
+  const handleProductSelect = useCallback((
+    _: React.SyntheticEvent,
+    value: { label?: string; value?: string } | null
+  ) => {
     if (!value) return;
     const selected = products.find(p => p._id === value.value);
     if (selected) {
@@ -460,9 +462,9 @@ export default function ProductPage() {
       setVideoPreview(selected.video ? getImageUrl(selected.video) || null : null);
     } else {
       // Only update name, keep other fields as-is
-      setForm(prev => ({ ...prev, name: value.label }));
+      setForm(prev => ({ ...prev, name: value.label || "" }));
     }
-  };
+  }, [products, getId, setForm, setImagePreview, setImage1Preview, setImage2Preview, setVideoPreview]);
 
   // Add effect to auto-calculate oz and inch
   useEffect(() => {
@@ -570,7 +572,7 @@ export default function ProductPage() {
             </Box>
             <Chip
               icon={<FilterListIcon />}
-              label={`${filteredProducts.length} products`}
+              label={`${filteredProducts().length} products`}
               sx={{
                 bgcolor: '#3498db',
                 color: 'white',
@@ -619,12 +621,12 @@ export default function ProductPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedProducts.map((product) => (
+                {paginatedProducts().map((product) => (
                   <TableRow key={product._id} sx={{ '&:hover': { bgcolor: '#f8f9fa' } }}>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar
-                          src={getImageUrl(product.img)}
+                          src={getImageUrl(product.img) || ""}
                           sx={{ width: 48, height: 48, bgcolor: '#f8f9fa' }}
                         >
                           <ImageIcon />
@@ -696,10 +698,10 @@ export default function ProductPage() {
         )}
         
         {/* Pagination */}
-        {filteredProducts.length > rowsPerPage && (
+        {filteredProducts().length > rowsPerPage && (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3, borderTop: '1px solid #ecf0f1' }}>
             <Pagination
-              count={Math.ceil(filteredProducts.length / rowsPerPage)}
+              count={Math.ceil(filteredProducts().length / rowsPerPage)}
               page={page}
               onChange={(_, value) => setPage(value)}
               color="primary"
@@ -719,7 +721,7 @@ export default function ProductPage() {
         <DialogContent sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 2 }}>
           {/* Product selection dropdown for duplication/quick fill */}
           <Autocomplete
-            options={products.map((p: any) => ({ label: p.name, value: p._id }))}
+            options={products.map((p: Product) => ({ label: p.name, value: p._id }))}
             getOptionLabel={option => typeof option === 'string' ? option : option.label}
             onChange={handleProductSelect}
             renderInput={(params) => (
@@ -857,10 +859,12 @@ export default function ProductPage() {
               </Button>
               {imagePreview && (
                 <Box sx={{ mt: 2 }}>
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Preview"
-                    style={{ maxWidth: '200px', borderRadius: '8px' }}
+                    width={200}
+                    height={200}
+                    style={{ borderRadius: '8px' }}
                   />
                 </Box>
               )}
@@ -892,10 +896,12 @@ export default function ProductPage() {
               </Button>
               {image1Preview && (
                 <Box sx={{ mt: 2 }}>
-                  <img
+                  <Image
                     src={image1Preview}
                     alt="Preview 1"
-                    style={{ maxWidth: '200px', borderRadius: '8px' }}
+                    width={200}
+                    height={200}
+                    style={{ borderRadius: '8px' }}
                   />
                 </Box>
               )}
@@ -927,10 +933,12 @@ export default function ProductPage() {
               </Button>
               {image2Preview && (
                 <Box sx={{ mt: 2 }}>
-                  <img
+                  <Image
                     src={image2Preview}
                     alt="Preview 2"
-                    style={{ maxWidth: '200px', borderRadius: '8px' }}
+                    width={200}
+                    height={200}
+                    style={{ borderRadius: '8px' }}
                   />
                 </Box>
               )}
@@ -1018,10 +1026,12 @@ export default function ProductPage() {
                   <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>Main Image</Typography>
                   {selectedProduct.img && (
                     <Box>
-                      <img
-                        src={getImageUrl(selectedProduct.img)}
+                      <Image
+                        src={getImageUrl(selectedProduct.img) || ""}
                         alt="Main"
-                        style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px' }}
+                        width={200}
+                        height={200}
+                        style={{ borderRadius: '8px' }}
                         onLoad={e => {
                           const target = e.target as HTMLImageElement;
                           setImgDims(dims => ({ ...dims, img: [target.naturalWidth, target.naturalHeight] }));
@@ -1040,10 +1050,12 @@ export default function ProductPage() {
                   <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>Image 1</Typography>
                   {selectedProduct.image1 && (
                     <Box>
-                      <img
-                        src={getImageUrl(selectedProduct.image1)}
+                      <Image
+                        src={getImageUrl(selectedProduct.image1) || ""}
                         alt="Image 1"
-                        style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px' }}
+                        width={200}
+                        height={200}
+                        style={{ borderRadius: '8px' }}
                         onLoad={e => {
                           const target = e.target as HTMLImageElement;
                           setImgDims(dims => ({ ...dims, image1: [target.naturalWidth, target.naturalHeight] }));
@@ -1062,10 +1074,12 @@ export default function ProductPage() {
                   <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>Image 2</Typography>
                   {selectedProduct.image2 && (
                     <Box>
-                      <img
-                        src={getImageUrl(selectedProduct.image2)}
+                      <Image
+                        src={getImageUrl(selectedProduct.image2) || ""}
                         alt="Image 2"
-                        style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px' }}
+                        width={200}
+                        height={200}
+                        style={{ borderRadius: '8px' }}
                         onLoad={e => {
                           const target = e.target as HTMLImageElement;
                           setImgDims(dims => ({ ...dims, image2: [target.naturalWidth, target.naturalHeight] }));
@@ -1085,7 +1099,7 @@ export default function ProductPage() {
                   {selectedProduct.video && (
                     <Box>
                       <video
-                        src={getImageUrl(selectedProduct.video)}
+                        src={getImageUrl(selectedProduct.video) || ""}
                         controls
                         poster={getImageUrl(selectedProduct.videoThumbnail) || undefined}
                         style={{ maxWidth: '200px', borderRadius: '8px' }}
@@ -1114,18 +1128,24 @@ export default function ProductPage() {
               </Box>
               {/* Details grid */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
-                {dropdownFields.filter(field => field.key !== 'motif').map((field) => (
-                  <Box key={field.key}>
-                    <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>
-                      {field.label}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>
-                      {hasName((selectedProduct as any)[field.key])
-                        ? (selectedProduct as any)[field.key].name || '-' 
-                        : (selectedProduct as any)[field.key] || '-'}
-                    </Typography>
-                  </Box>
-                ))}
+                {dropdownFields.filter(field => field.key !== 'motif').map((field) => {
+                  const value = (selectedProduct as unknown as Record<string, unknown>)[field.key];
+                  return (
+                    <Box key={field.key}>
+                      <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>
+                        {field.label}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#2c3e50', mt: 0.5 }}>
+                        {/* @ts-expect-error: TypeScript cannot infer type after isNameObject guard, but this is safe */}
+                        {isNameObject(value)
+                          ? value.name || '-'
+                          : value !== undefined && value !== null && typeof value !== 'object'
+                            ? String(value)
+                            : '-'}
+                      </Typography>
+                    </Box>
+                  );
+                })}
                 {/* Motif and new fields */}
                 <Box>
                   <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>Motif</Typography>

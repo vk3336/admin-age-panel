@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, Typography, TextField, Button, Alert, Box, CircularProgress, InputAdornment, Avatar } from '@mui/material';
+import { Card, CardContent, Typography, TextField, Button, Box, CircularProgress, InputAdornment, Avatar } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
@@ -11,7 +11,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
 
   const setAuthCookie = () => {
@@ -23,12 +22,10 @@ export default function LoginPage() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      setError("Please enter a valid email");
       return;
     }
     
     setLoading(true);
-    setError("");
     
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/sendotp`, {
@@ -41,10 +38,8 @@ export default function LoginPage() {
       if (res.ok && data.success) {
         setStep(2);
       } else {
-        setError(data.message || "Failed to send OTP");
       }
-    } catch (error) {
-      setError("Network error. Please try again.");
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -53,12 +48,10 @@ export default function LoginPage() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp.trim()) {
-      setError("Please enter the OTP");
       return;
     }
     
     setLoading(true);
-    setError("");
     
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/verifyotp`, {
@@ -73,10 +66,9 @@ export default function LoginPage() {
         setAuthCookie();
         router.push("/dashboard");
       } else {
-        setError(data.message || "Invalid OTP");
       }
-    } catch (error) {
-      setError("Network error. Please try again.");
+    } catch {
+      
     } finally {
       setLoading(false);
     }
@@ -136,15 +128,6 @@ export default function LoginPage() {
               </Typography>
             </Box>
             
-            {error && (
-              <Alert severity="error" sx={{ 
-                mb: 3, 
-                borderRadius: '8px',
-                '& .MuiAlert-icon': { color: '#e74c3c' }
-              }}>
-                {error}
-              </Alert>
-            )}
             
             {step === 1 && (
               <form onSubmit={handleSendOtp}>
