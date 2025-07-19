@@ -233,15 +233,15 @@ export default function ProductPage() {
       motif: getId(product.motif),
       um: getId(product.um),
       currency: getId(product.currency),
-      gsm: getId(product.gsm),
-      oz: getId(product.oz),
-      cm: getId(product.cm),
-      inch: getId(product.inch),
+      gsm: product.gsm !== undefined && product.gsm !== null ? String(product.gsm) : "",
+      oz: product.oz !== undefined && product.oz !== null ? String(product.oz) : "",
+      cm: product.cm !== undefined && product.cm !== null ? String(product.cm) : "",
+      inch: product.inch !== undefined && product.inch !== null ? String(product.inch) : "",
       img: product.img,
       image1: product.image1,
       image2: product.image2,
       video: product.video,
-      quantity: product.quantity?.toString() || "",
+      quantity: product.quantity !== undefined && product.quantity !== null ? String(product.quantity) : "",
     } : {
       name: "",
       category: "",
@@ -431,7 +431,6 @@ export default function ProductPage() {
     if (!value) return;
     const selected = products.find(p => p._id === value.value);
     if (selected) {
-      // Fill all fields with selected product data
       setForm({
         name: selected.name,
         category: getId(selected.category),
@@ -446,22 +445,21 @@ export default function ProductPage() {
         motif: getId(selected.motif),
         um: getId(selected.um),
         currency: getId(selected.currency),
-        gsm: getId(selected.gsm),
-        oz: getId(selected.oz),
-        cm: getId(selected.cm),
-        inch: getId(selected.inch),
+        gsm: selected.gsm !== undefined && selected.gsm !== null ? String(selected.gsm) : "",
+        oz: selected.oz !== undefined && selected.oz !== null ? String(selected.oz) : "",
+        cm: selected.cm !== undefined && selected.cm !== null ? String(selected.cm) : "",
+        inch: selected.inch !== undefined && selected.inch !== null ? String(selected.inch) : "",
         img: selected.img,
         image1: selected.image1,
         image2: selected.image2,
         video: selected.video,
-        quantity: selected.quantity?.toString() || "",
+        quantity: selected.quantity !== undefined && selected.quantity !== null ? String(selected.quantity) : "",
       });
       setImagePreview(selected.img ? getImageUrl(selected.img) || null : null);
       setImage1Preview(selected.image1 ? getImageUrl(selected.image1) || null : null);
       setImage2Preview(selected.image2 ? getImageUrl(selected.image2) || null : null);
       setVideoPreview(selected.video ? getImageUrl(selected.video) || null : null);
     } else {
-      // Only update name, keep other fields as-is
       setForm(prev => ({ ...prev, name: value.label || "" }));
     }
   }, [products, getId, setForm, setImagePreview, setImage1Preview, setImage2Preview, setVideoPreview]);
