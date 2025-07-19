@@ -465,20 +465,19 @@ export default function ProductPage() {
   }, [products, getId, setForm, setImagePreview, setImage1Preview, setImage2Preview, setVideoPreview]);
 
   // Add effect to auto-calculate oz and inch
+  // Only auto-calculate oz if oz is empty (not set from backend or user input)
   useEffect(() => {
-    if (form.gsm && !isNaN(Number(form.gsm))) {
+    if (form.gsm && !isNaN(Number(form.gsm)) && (!form.oz || form.oz === "")) {
       const oz = (Number(form.gsm) / 33.906).toFixed(2);
       setForm(prev => ({ ...prev, oz }));
-    } else {
-      setForm(prev => ({ ...prev, oz: "" }));
     }
   }, [form.gsm]);
+
+  // Only auto-calculate inch if inch is empty (not set from backend or user input)
   useEffect(() => {
-    if (form.cm && !isNaN(Number(form.cm))) {
+    if (form.cm && !isNaN(Number(form.cm)) && (!form.inch || form.inch === "")) {
       const inch = (Number(form.cm) / 2.54).toFixed(2);
       setForm(prev => ({ ...prev, inch }));
-    } else {
-      setForm(prev => ({ ...prev, inch: "" }));
     }
   }, [form.cm]);
 
