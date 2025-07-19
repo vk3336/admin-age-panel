@@ -1,4 +1,4 @@
-import type { NextConfig } from 'next'
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -7,11 +7,15 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
-  
+
+  // ✅ Disables source maps in production — this speeds up build time
+  productionBrowserSourceMaps: false,
+
   images: {
     domains: ['res.cloudinary.com'],
     formats: ['image/webp', 'image/avif'],
   },
+
   webpack: (config, { dev, isServer }) => {
     // Optimize bundle size
     if (!dev && !isServer) {
@@ -32,11 +36,11 @@ const nextConfig: NextConfig = {
             },
           },
         },
-      }
+      };
     }
-    
-    return config
-  },
-}
 
-export default nextConfig
+    return config;
+  },
+};
+
+export default nextConfig;

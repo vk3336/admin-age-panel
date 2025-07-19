@@ -476,7 +476,7 @@ export default function ProductPage() {
       const oz = (Number(form.gsm) / 33.906).toFixed(2);
       setForm(prev => ({ ...prev, oz }));
     }
-  }, [form.gsm]);
+  }, [form.gsm, form.oz]);
 
   // Only auto-calculate inch if inch is empty (not set from backend or user input)
   useEffect(() => {
@@ -484,7 +484,7 @@ export default function ProductPage() {
       const inch = (Number(form.cm) / 2.54).toFixed(2);
       setForm(prev => ({ ...prev, inch }));
     }
-  }, [form.cm]);
+  }, [form.cm, form.inch]);
 
   if (pageAccess === 'denied') {
     return (
