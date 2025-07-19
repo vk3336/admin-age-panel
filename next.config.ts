@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   
   images: {
-    domains: ['localhost'],
+    domains: ['res.cloudinary.com'],
     formats: ['image/webp', 'image/avif'],
   },
   webpack: (config, { dev, isServer }) => {

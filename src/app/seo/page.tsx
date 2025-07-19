@@ -147,13 +147,32 @@ function SeoPage() {
   // Handlers
   const handleOpen = (item?: Record<string, unknown>) => {
     setEditId(item && typeof item._id === 'string' ? item._id : null);
-    setForm(item && typeof item === 'object' && item !== null ? {
-      ...item,
-      product:
-        item.product && typeof item.product === 'object' && item.product !== null && '_id' in item.product && typeof (item.product as unknown as { _id: string })._id === 'string'
-          ? (item.product as unknown as { _id: string })._id
-          : item.product
-    } : {});
+    // Initialize form with all fields, including nested
+    const newForm: Record<string, unknown> = {};
+    SEO_FIELDS.forEach(f => {
+      if (typeof f.key === 'string') {
+        if (f.key.includes('.')) {
+          const keys = f.key.split('.');
+          let obj = newForm;
+          let src = item as Record<string, unknown>;
+          for (let i = 0; i < keys.length - 1; i++) {
+            if (!obj[keys[i]]) obj[keys[i]] = {};
+            obj = obj[keys[i]] as Record<string, unknown>;
+            src = (src && typeof src === 'object' && src[keys[i]]) ? src[keys[i]] as Record<string, unknown> : {};
+          }
+          obj[keys[keys.length - 1]] = src && typeof src === 'object' && keys[keys.length - 1] in src ? src[keys[keys.length - 1]] : '';
+        } else {
+          newForm[f.key] = item && typeof item === 'object' && f.key in item ? item[f.key] : '';
+        }
+      }
+    });
+    // Special handling for product field
+    if (item && typeof item === 'object' && item.product) {
+      newForm.product = item.product && typeof item.product === 'object' && '_id' in item.product && typeof (item.product as { _id: string })._id === 'string'
+        ? (item.product as { _id: string })._id
+        : item.product;
+    }
+    setForm(item ? newForm : {});
     setOpen(true);
   };
   const handleClose = () => { setOpen(false); setEditId(null); setForm({}); };
@@ -175,9 +194,24 @@ function SeoPage() {
       ((seo.product as unknown as { _id: string })._id === productId)
     );
     if (existingSeo) {
+      // Deeply initialize all fields from SEO_FIELDS
       const newForm: Record<string, unknown> = { product: productId };
       SEO_FIELDS.forEach(f => {
-        if (typeof f.key === 'string' && f.key !== 'product') newForm[f.key] = (existingSeo as Record<string, unknown>)[f.key] ?? '';
+        if (typeof f.key === 'string') {
+          if (f.key.includes('.')) {
+            const keys = f.key.split('.');
+            let obj = newForm;
+            let src = existingSeo as Record<string, unknown>;
+            for (let i = 0; i < keys.length - 1; i++) {
+              if (!obj[keys[i]]) obj[keys[i]] = {};
+              obj = obj[keys[i]] as Record<string, unknown>;
+              src = (src && typeof src === 'object' && src[keys[i]]) ? src[keys[i]] as Record<string, unknown> : {};
+            }
+            obj[keys[keys.length - 1]] = src && typeof src === 'object' && keys[keys.length - 1] in src ? src[keys[keys.length - 1]] : '';
+          } else {
+            newForm[f.key] = (existingSeo as Record<string, unknown>)[f.key] ?? '';
+          }
+        }
       });
       setForm(newForm);
     } else {
@@ -429,8 +463,8 @@ function SeoPage() {
                     renderInput={(params) => (
                       <TextField {...params} label={field.label} name={field.key} required disabled={pageAccess === 'view'} />
                     )}
-                    renderOption={(props, option) => (
-                      <ListItem {...props} key={option.value || option.label}>
+                    renderOption={(props, option, { index }) => (
+                      <ListItem {...props} key={option.value || option.label || index}>
                         <ListItemAvatar>
                           <Avatar src={option.img ? (option.img.startsWith('http') ? option.img : `${API_URL}/images/${option.img}`) : undefined}>
                             {typeof option.label === 'string' ? option.label[0] : '-'}

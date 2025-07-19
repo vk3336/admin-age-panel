@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, Typography, TextField, Button, Box, CircularProgress, InputAdornment, Avatar } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
@@ -11,7 +11,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [year, setYear] = useState<number | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   const setAuthCookie = () => {
     document.cookie = "admin-auth=true; path=/; max-age=86400";
@@ -22,10 +28,12 @@ export default function LoginPage() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
+      setError("Please enter your email address.");
       return;
     }
     
     setLoading(true);
+    setError("");
     
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/sendotp`, {
@@ -37,9 +45,14 @@ export default function LoginPage() {
       
       if (res.ok && data.success) {
         setStep(2);
+        setError("");
+      } else if (res.status === 403) {
+        setError("This email is not allowed. Please use an authorized admin email.");
       } else {
+        setError(data.message || "Invalid email address or failed to send OTP.");
       }
     } catch {
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -48,10 +61,12 @@ export default function LoginPage() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp.trim()) {
+      setError("Please enter the OTP.");
       return;
     }
     
     setLoading(true);
+    setError("");
     
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/verifyotp`, {
@@ -65,10 +80,12 @@ export default function LoginPage() {
       if (res.ok && data.success) {
         setAuthCookie();
         router.push("/dashboard");
+        setError("");
       } else {
+        setError(data.message || "Invalid OTP or email.");
       }
     } catch {
-      
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -162,6 +179,11 @@ export default function LoginPage() {
                     ),
                   }}
                 />
+                {error && (
+                  <Typography color="error" sx={{ mt: 1, mb: 1, textAlign: 'center' }}>
+                    {error}
+                  </Typography>
+                )}
                 <Button
                   type="submit"
                   variant="contained"
@@ -238,6 +260,11 @@ export default function LoginPage() {
                     ),
                   }}
                 />
+                {error && (
+                  <Typography color="error" sx={{ mt: 1, mb: 1, textAlign: 'center' }}>
+                    {error}
+                  </Typography>
+                )}
                 <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
                   <Button
                     type="submit"
@@ -282,18 +309,22 @@ export default function LoginPage() {
               </form>
             )}
             
-            <Box sx={{ 
-              mt: 4, 
-              textAlign: 'center',
-              pt: 2,
-              borderTop: '1px solid #ecf0f1'
-            }}>
-              <Typography variant="body2" sx={{ 
-                color: '#7f8c8d',
-                fontSize: '14px'
-              }}>
-                © {new Date().getFullYear()} Vivek Project Admin Panel
-              </Typography>
+            <Box
+              sx={{
+                mt: 4,
+                textAlign: 'center',
+                pt: 2,
+                borderTop: '1px solid #ecf0f1'
+              }}
+            >
+              {year && (
+                <Typography variant="body2" sx={{ 
+                  color: '#7f8c8d',
+                  fontSize: '14px'
+                }}>
+                  © {year} Vivek Project Admin Panel
+                </Typography>
+              )}
             </Box>
           </CardContent>
         </Card>

@@ -364,7 +364,12 @@ export default function ProductPage() {
       // Append all text fields first
       Object.keys(form).forEach(key => {
         if (!["img", "image1", "image2", "video"].includes(key) && form[key] !== undefined && form[key] !== "") {
-          formData.append(key, form[key] as string);
+          // Convert numeric fields to numbers before appending
+          if (["gsm", "oz", "cm", "inch", "quantity"].includes(key)) {
+            formData.append(key, String(Number(form[key])));
+          } else {
+            formData.append(key, form[key] as string);
+          }
         }
       });
       // Then append files

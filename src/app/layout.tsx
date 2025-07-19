@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useCallback, useState, useEffect } from "react";
 import NextLink from "next/link";
 import { 
   Box, 
@@ -677,6 +677,8 @@ Header.displayName = 'Header';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const theme = useMemo(() => createDattaAbleTheme('light'), []);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   return (
     <html lang="en">
@@ -684,9 +686,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <Box sx={{ display: 'flex' }}>
-            <Sidebar />
+            {mounted && <Sidebar />}
             <Box sx={{ flexGrow: 1 }}>
-              <Header />
+              {mounted && <Header />}
               <Box
                 component="main"
                 sx={{
