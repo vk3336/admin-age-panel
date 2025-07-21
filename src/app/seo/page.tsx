@@ -11,6 +11,7 @@ import InputBase from '@mui/material/InputBase';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Avatar } from '@mui/material';
 import { Pagination } from '@mui/material';
+import { apiFetch } from '../../utils/apiFetch';
 
 // --- SEO Model Fields ---
 const SEO_FIELDS = [
@@ -82,13 +83,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
 function getSeoPagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
+  if (email && superAdmin && email === superAdmin) return 'all access';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  let adminPerm = email ? perms[email] : undefined;
-  if (typeof adminPerm === 'string') {
-    try { adminPerm = JSON.parse(adminPerm); } catch {}
+  if (perms && perms.seo) {
+    return perms.seo;
   }
-  return adminPerm?.seoPermission || 'denied';
+  return 'no access';
 }
 
 interface Product {
@@ -122,7 +123,7 @@ function SeoPage() {
 
   // Fetch products for dropdown
   useEffect(() => {
-    fetch(`${API_URL}/product?limit=1000`)
+    apiFetch(`${API_URL}/product?limit=100`)
       .then(res => res.json())
       .then(data => setProducts(data.data || []));
   }, []);
@@ -130,7 +131,7 @@ function SeoPage() {
   // Fetch SEO list
   const fetchSeo = useCallback(() => {
     setLoading(true);
-    fetch(`${API_URL}/seo?page=1&limit=100${search ? `&search=${encodeURIComponent(search)}` : ""}`)
+    apiFetch(`${API_URL}/seo?page=1&limit=100${search ? `&search=${encodeURIComponent(search)}` : ""}`)
       .then(res => res.json())
       .then(data => {
         setSeoList(data.data || []);
@@ -238,7 +239,7 @@ function SeoPage() {
     });
     // Remove empty fields
     Object.keys(body).forEach(k => (body[k] === "" || body[k] === undefined) && delete body[k]);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -255,7 +256,7 @@ function SeoPage() {
     // Only call window.confirm in the browser
     if (typeof window !== 'undefined' && !window.confirm("Are you sure you want to delete this SEO entry?")) return;
     setLoading(true);
-    await fetch(`${API_URL}/seo/${id}`, { method: "DELETE" });
+    await apiFetch(`${API_URL}/seo/${id}`, { method: "DELETE" });
     await fetchSeo(); // Always refresh after delete
     setLoading(false);
   };
@@ -269,7 +270,7 @@ function SeoPage() {
   }
 
   // Render
-  if (pageAccess === 'denied') {
+  if (pageAccess === 'no access') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" sx={{ color: '#e74c3c', mb: 2 }}>
@@ -284,7 +285,7 @@ function SeoPage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'view' && (
+      {pageAccess === 'only view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>

@@ -10,7 +10,12 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { cachedFetch } from '../../utils/performance';
+import { apiFetch } from '../../utils/apiFetch';
+
+interface Structure {
+  _id: string;
+  name: string;
+}
 
 interface Substructure {
   _id?: string;
@@ -23,7 +28,7 @@ const SubstructureRow = React.memo(({ substructure, onEdit, onDelete, viewOnly, 
   onEdit: (substructure: Substructure) => void;
   onDelete: (id: string) => void;
   viewOnly: boolean;
-  structures: Substructure[];
+  structures: Structure[];
 }) => (
   <TableRow hover sx={{ 
     transition: 'all 0.3s ease', 
@@ -44,7 +49,7 @@ const SubstructureRow = React.memo(({ substructure, onEdit, onDelete, viewOnly, 
     <TableCell>
       {typeof substructure.structure === 'object'
         ? substructure.structure.name
-        : structures.find((s: Substructure) => s._id === substructure.structure)?.name || 'N/A'}
+        : structures.find((s: Structure) => s._id === substructure.structure)?.name || 'N/A'}
     </TableCell>
     <TableCell>
       <Box sx={{ display: 'flex', gap: 1 }}>
@@ -100,10 +105,14 @@ const SubstructureForm = React.memo(({
   submitting: boolean;
   editId: string | null;
   viewOnly: boolean;
-  structures: Substructure[];
+  structures: Structure[];
 }) => {
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+    const name = e.target.name;
+    const value = e.target.value;
+    if (name) {
+      setForm({ ...form, [name]: value });
+    }
   }, [form, setForm]);
 
   return (
@@ -227,25 +236,25 @@ const SubstructureForm = React.memo(({
 SubstructureForm.displayName = 'SubstructureForm';
 
 function getSubstructurePagePermission() {
-  if (typeof window === 'undefined') return 'denied';
+  if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+  if (email && superAdmin && email === superAdmin) return 'all access';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  let adminPerm = email ? perms[email] : undefined;
-  if (typeof adminPerm === 'string') {
-    try { adminPerm = JSON.parse(adminPerm); } catch {}
+  if (perms && perms.filter) {
+    return perms.filter;
   }
-  return adminPerm?.filterPermission || 'denied';
+  return 'no access';
 }
 
 export default function SubstructurePage() {
   // All hooks at the top
-  const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
+  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
   const [substructures, setSubstructures] = useState<Substructure[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Substructure>({ name: '', structure: '' });
-  const [structures, setStructures] = useState<Substructure[]>([]);
+  const [structures, setStructures] = useState<Structure[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
@@ -255,22 +264,29 @@ export default function SubstructurePage() {
 
   const fetchSubstructures = useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/substructure`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api'}/substructure`);
+      const data = await res.json();
       setSubstructures(data.data || []);
-    } finally {
+    } catch (error) {
+      console.error("Failed to fetch substructures:", error);
+    }
+  }, []);
+
+  const fetchStructures = useCallback(async () => {
+    try {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api'}/structure`);
+      const data = await res.json();
+      setStructures(data.data || []);
+    } catch (error) {
+      console.error("Failed to fetch structures:", error);
     }
   }, []);
 
   useEffect(() => {
     fetchSubstructures();
+    fetchStructures();
     setPageAccess(getSubstructurePagePermission());
-  }, [fetchSubstructures]);
-
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/structure`)
-      .then(res => res.json())
-      .then(data => setStructures(data.data || []));
-  }, []);
+  }, [fetchSubstructures, fetchStructures]);
 
   const handleOpen = useCallback((substructure: Substructure | null = null) => {
     setEditId(substructure?._id || null);
@@ -295,7 +311,7 @@ export default function SubstructurePage() {
         ...form,
         structure: typeof form.structure === 'object' ? form.structure._id : form.structure,
       };
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -310,20 +326,11 @@ export default function SubstructurePage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/substructure/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data && data.message && data.message.includes("in use")) {
-          // setDeleteError("Cannot delete: Substructure is in use by one or more products."); // This line was removed
-        } else {
-          // setDeleteError(data.message || "Failed to delete substructure."); // This line was removed
-        }
-        return;
-      }
+      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/substructure/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchSubstructures();
-    } catch {
-      // setDeleteError("An error occurred while deleting the substructure."); // This line was removed
+    } catch (error) {
+      console.error("Failed to delete substructure:", error);
     }
   }, [deleteId, fetchSubstructures]);
 
@@ -336,7 +343,7 @@ export default function SubstructurePage() {
   }, []);
 
   // Permission check rendering
-  if (pageAccess === 'denied') {
+  if (pageAccess === 'no access') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" sx={{ color: '#e74c3c', mb: 2 }}>
@@ -359,7 +366,7 @@ export default function SubstructurePage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'view' && (
+      {pageAccess === 'only view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>
@@ -413,7 +420,7 @@ export default function SubstructurePage() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
-          disabled={pageAccess === 'view'}
+          disabled={pageAccess === 'only view'}
           sx={{
             fontWeight: 500,
             borderRadius: '6px',
@@ -533,7 +540,7 @@ export default function SubstructurePage() {
                     substructure={substructure}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
-                    viewOnly={pageAccess === 'view'}
+                    viewOnly={pageAccess === 'only view'}
                     structures={structures}
                   />
                 ))}
@@ -577,7 +584,7 @@ export default function SubstructurePage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
-        viewOnly={pageAccess === 'view'}
+        viewOnly={pageAccess === 'only view'}
         structures={structures}
       />
 
@@ -613,7 +620,7 @@ export default function SubstructurePage() {
               borderRadius: '6px',
               color: 'text.secondary',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Cancel
           </Button>
@@ -625,7 +632,7 @@ export default function SubstructurePage() {
               fontWeight: 500, 
               borderRadius: '6px',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Delete
           </Button>

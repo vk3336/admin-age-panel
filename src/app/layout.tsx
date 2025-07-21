@@ -22,7 +22,6 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import PeopleIcon from "@mui/icons-material/People";
-import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
@@ -30,7 +29,6 @@ import { usePathname } from "next/navigation";
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import Avatar from '@mui/material/Avatar';
 import PersonIcon from '@mui/icons-material/Person';
@@ -129,6 +127,14 @@ const createDattaAbleTheme = (mode: 'light' | 'dark') => createTheme({
 const Sidebar = React.memo(() => {
   const [open, setOpen] = React.useState(true);
   const pathname = usePathname();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const email = localStorage.getItem('admin-email');
+      const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
+      setIsSuperAdmin(Boolean(email && superAdmin && email === superAdmin));
+    }
+  }, []);
   const handleClick = useCallback(() => setOpen(prev => !prev), []);
   const handleLogout = useCallback(() => {
     document.cookie = "admin-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -302,44 +308,46 @@ const Sidebar = React.memo(() => {
           </ListItemButton>
 
           {/* Admin Restriction */}
-          <ListItemButton 
-            component={NextLink} 
-            href="/admin-restriction" 
-            sx={{
-              borderRadius: '6px',
-              mb: 1,
-              py: 1.5,
-              px: 2,
-              transition: 'all 0.3s ease',
-              ...(pathname === '/admin-restriction' && {
-                backgroundColor: 'primary.main',
-                color: 'white',
+          {isSuperAdmin && (
+            <ListItemButton 
+              component={NextLink} 
+              href="/admin-restriction" 
+              sx={{
+                borderRadius: '6px',
+                mb: 1,
+                py: 1.5,
+                px: 2,
+                transition: 'all 0.3s ease',
+                ...(pathname === '/admin-restriction' && {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                  }
+                }),
                 '&:hover': {
-                  backgroundColor: 'primary.dark',
-                }
-              }),
-              '&:hover': {
-                backgroundColor: pathname === '/admin-restriction' ? 'primary.dark' : 'action.hover',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ 
-              color: pathname === '/admin-restriction' ? 'white' : 'text.secondary', 
-              minWidth: 0, 
-              mr: 2 
-            }}>
-              <PeopleIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText 
-              primary="Admin Restriction" 
-              sx={{ 
-                '& .MuiTypography-root': { 
-                  fontSize: '14px',
-                  fontWeight: 500
-                } 
-              }} 
-            />
-          </ListItemButton>
+                  backgroundColor: pathname === '/admin-restriction' ? 'primary.dark' : 'action.hover',
+                },
+              }}
+            >
+              <ListItemIcon sx={{ 
+                color: pathname === '/admin-restriction' ? 'white' : 'text.secondary', 
+                minWidth: 0, 
+                mr: 2 
+              }}>
+                <PeopleIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Admin Restriction" 
+                sx={{ 
+                  '& .MuiTypography-root': { 
+                    fontSize: '14px',
+                    fontWeight: 500
+                  } 
+                }} 
+              />
+            </ListItemButton>
+          )}
 
           {/* Filters Dropdown */}
           <ListItemButton 
@@ -423,46 +431,6 @@ const Sidebar = React.memo(() => {
 
           <Divider sx={{ my: 2 }} />
 
-          {/* Settings */}
-          <ListItemButton 
-            component={NextLink} 
-            href="/settings" 
-            sx={{
-              borderRadius: '6px',
-              mb: 1,
-              py: 1.5,
-              px: 2,
-              transition: 'all 0.3s ease',
-              ...(pathname === '/settings' && {
-                backgroundColor: 'primary.main',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
-                }
-              }),
-              '&:hover': {
-                backgroundColor: pathname === '/settings' ? 'primary.dark' : 'action.hover',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ 
-              color: pathname === '/settings' ? 'white' : 'text.secondary', 
-              minWidth: 0, 
-              mr: 2 
-            }}>
-              <SettingsIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText 
-              primary="Settings" 
-              sx={{ 
-                '& .MuiTypography-root': { 
-                  fontSize: '14px',
-                  fontWeight: 500
-                } 
-              }} 
-            />
-          </ListItemButton>
-
           {/* Logout */}
           <ListItemButton 
             onClick={handleLogout}
@@ -507,6 +475,12 @@ Sidebar.displayName = 'Sidebar';
 const Header = React.memo(() => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notifAnchor, setNotifAnchor] = useState<null | HTMLElement>(null);
+  const [userEmail, setUserEmail] = useState('');
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setUserEmail(localStorage.getItem('admin-email') || '');
+    }
+  }, []);
   const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleNotifClick = (event: React.MouseEvent<HTMLElement>) => setNotifAnchor(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -565,9 +539,6 @@ const Header = React.memo(() => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton size="small" sx={{ color: '#6c7890', width: 36, height: 36 }}>
             <WbSunnyOutlinedIcon sx={{ fontSize: 22 }} />
-          </IconButton>
-          <IconButton size="small" sx={{ color: '#6c7890', width: 36, height: 36 }}>
-            <SettingsOutlinedIcon sx={{ fontSize: 22 }} />
           </IconButton>
           <IconButton size="small" onClick={handleNotifClick} sx={{ color: '#6c7890', width: 36, height: 36 }}>
             <Badge badgeContent={3} color="success" sx={{ '& .MuiBadge-badge': { fontSize: 11, height: 18, minWidth: 18, background: '#1de9b6' } }}>
@@ -645,7 +616,7 @@ const Header = React.memo(() => {
               Admin User
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              admin@example.com
+              {userEmail}
             </Typography>
           </Box>
           <MenuItem onClick={handleMenuClose}>
@@ -655,10 +626,7 @@ const Header = React.memo(() => {
             Profile
           </MenuItem>
           <MenuItem onClick={handleMenuClose}>
-            <ListItemIcon>
-              <SettingsIcon fontSize="small" />
-            </ListItemIcon>
-            Settings
+            {/* Settings menu item removed */}
           </MenuItem>
           <Divider />
           <MenuItem onClick={handleLogout}>

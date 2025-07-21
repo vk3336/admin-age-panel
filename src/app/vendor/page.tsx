@@ -10,7 +10,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { cachedFetch } from '../../utils/performance';
+import { apiFetch } from '../../utils/apiFetch';
 
 interface Vendor {
   _id?: string;
@@ -192,20 +192,20 @@ function getCurrentAdminEmail() {
 }
 
 function getVendorPagePermission() {
-  if (typeof window === 'undefined') return 'denied';
+  if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+  if (email && superAdmin && email === superAdmin) return 'all access';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  let adminPerm = email ? perms[email] : undefined;
-  if (typeof adminPerm === 'string') {
-    try { adminPerm = JSON.parse(adminPerm); } catch {}
+  if (perms && perms.filter) {
+    return perms.filter;
   }
-  return adminPerm?.filterPermission || 'denied';
+  return 'no access';
 }
 
 export default function VendorPage() {
   // All hooks at the top
-  const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
+  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -219,9 +219,11 @@ export default function VendorPage() {
 
   const fetchVendors = useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor`);
+      const data = await res.json();
       setVendors(data.data || []);
-    } finally {
+    } catch (error) {
+        console.error("Failed to fetch vendors:", error);
     }
   }, []);
 
@@ -231,11 +233,10 @@ export default function VendorPage() {
       if (!email) {
         return;
       }
-      const res = await fetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
-      const data = await res.json();
-      if (data.success) {
-      } else {
-        return;
+      try {
+        await apiFetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
+      } catch (error) {
+        console.error("Permission check failed:", error);
       }
     };
     checkPermission();
@@ -270,7 +271,7 @@ export default function VendorPage() {
     try {
       const method = editId ? "PUT" : "POST";
       const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor${editId ? "/" + editId : ""}`;
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -285,17 +286,11 @@ export default function VendorPage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data && data.message && data.message.includes("in use")) {
-        } else {
-        }
-        return;
-      }
+      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchVendors();
-    } catch {
+    } catch (error) {
+        console.error("Failed to delete vendor:", error);
     }
   }, [deleteId, fetchVendors]);
 
@@ -308,7 +303,7 @@ export default function VendorPage() {
   }, []);
 
   // Permission check rendering
-  if (pageAccess === 'denied') {
+  if (pageAccess === 'no access') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" sx={{ color: '#e74c3c', mb: 2 }}>
@@ -331,7 +326,7 @@ export default function VendorPage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'view' && (
+      {pageAccess === 'only view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>
@@ -385,7 +380,7 @@ export default function VendorPage() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
-          disabled={pageAccess === 'view'}
+          disabled={pageAccess === 'only view'}
           sx={{
             fontWeight: 500,
             borderRadius: '6px',
@@ -497,7 +492,7 @@ export default function VendorPage() {
                     vendor={vendor}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
-                    viewOnly={pageAccess === 'view'}
+                    viewOnly={pageAccess === 'only view'}
                   />
                 ))}
                 {paginatedVendors.length === 0 && (
@@ -540,7 +535,7 @@ export default function VendorPage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
-        viewOnly={pageAccess === 'view'}
+        viewOnly={pageAccess === 'only view'}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -570,7 +565,7 @@ export default function VendorPage() {
               borderRadius: '6px',
               color: 'text.secondary',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Cancel
           </Button>
@@ -582,7 +577,7 @@ export default function VendorPage() {
               fontWeight: 500, 
               borderRadius: '6px',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Delete
           </Button>

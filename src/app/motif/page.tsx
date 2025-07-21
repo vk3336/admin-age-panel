@@ -8,6 +8,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import HomeIcon from '@mui/icons-material/Home';
 import { cachedFetch } from '../../utils/performance';
+import { apiFetch } from '../../utils/apiFetch';
 
 interface Motif {
   _id?: string;
@@ -154,7 +155,7 @@ export default function MotifPage() {
     try {
       const method = editId ? "PUT" : "POST";
       const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif${editId ? "/" + editId : ""}`;
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -170,7 +171,7 @@ export default function MotifPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

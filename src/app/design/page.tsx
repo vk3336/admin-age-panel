@@ -78,20 +78,20 @@ function getCurrentAdminEmail() {
 }
 
 function getDesignPagePermission() {
-  if (typeof window === 'undefined') return 'denied';
+  if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
+  if (email && superAdmin && email === superAdmin) return 'all access';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  let adminPerm = email ? perms[email] : undefined;
-  if (typeof adminPerm === 'string') {
-    try { adminPerm = JSON.parse(adminPerm); } catch {}
+  if (perms && perms.filter) {
+    return perms.filter;
   }
-  return adminPerm?.filterPermission || 'denied';
+  return 'no access';
 }
 
 export default function DesignPage() {
   // All hooks at the top
-  const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
+  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
   const [designs, setDesigns] = useState<Design[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -206,7 +206,7 @@ export default function DesignPage() {
   const paginatedDesigns = filteredDesigns.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   // Permission check rendering
-  if (pageAccess === 'denied') {
+  if (pageAccess === 'no access') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" sx={{ color: '#e74c3c', mb: 2 }}>
@@ -221,7 +221,7 @@ export default function DesignPage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'view' && (
+      {pageAccess === 'only view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>
@@ -275,7 +275,7 @@ export default function DesignPage() {
           variant="contained"
           startIcon={<BrushIcon />}
           onClick={() => handleOpen()}
-          disabled={pageAccess === 'view'}
+          disabled={pageAccess === 'only view'}
           sx={{
             fontWeight: 500,
             borderRadius: '6px',
@@ -375,7 +375,7 @@ export default function DesignPage() {
                     design={design}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
-                    viewOnly={pageAccess === 'view'}
+                    viewOnly={pageAccess === 'only view'}
                   />
                 ))}
                 {paginatedDesigns.length === 0 && (
@@ -418,7 +418,7 @@ export default function DesignPage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
-        viewOnly={pageAccess === 'view'}
+        viewOnly={pageAccess === 'only view'}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -453,7 +453,7 @@ export default function DesignPage() {
               borderRadius: '6px',
               color: 'text.secondary',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Cancel
           </Button>
@@ -465,7 +465,7 @@ export default function DesignPage() {
               fontWeight: 500, 
               borderRadius: '6px',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Delete
           </Button>

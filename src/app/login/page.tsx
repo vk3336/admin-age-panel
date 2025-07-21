@@ -5,6 +5,7 @@ import { Card, CardContent, Typography, TextField, Button, Box, CircularProgress
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
+import { apiFetch } from '../../utils/apiFetch';
 
 export default function LoginPage() {
   const [step, setStep] = useState<1 | 2>(1);
@@ -25,6 +26,13 @@ export default function LoginPage() {
     localStorage.setItem("admin-email", email.trim());
   };
 
+  const fetchRoleByEmail = async (email: string) => {
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7000'}/api/roles`);
+    if (!res.ok) throw new Error('Failed to fetch roles');
+    const data = await res.json();
+    return data.find((role: any) => role.email.toLowerCase() === email.toLowerCase());
+  };
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -36,7 +44,33 @@ export default function LoginPage() {
     setError("");
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/sendotp`, {
+      const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+      if (email.trim() === superAdmin) {
+        // Allow super admin to send OTP
+        const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/sendotp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim() }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setStep(2);
+          setError("");
+        } else {
+          setError(data.message || "Invalid email address or failed to send OTP.");
+        }
+        setLoading(false);
+        return;
+      }
+      // Check if email exists in roles collection
+      const role = await fetchRoleByEmail(email.trim());
+      if (!role) {
+        setError("This email is not allowed. Please use an authorized admin email.");
+        setLoading(false);
+        return;
+      }
+      // Proceed to send OTP
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/sendotp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
@@ -69,7 +103,8 @@ export default function LoginPage() {
     setError("");
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/verifyotp`, {
+      const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/verifyotp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), otp: otp.trim() }),
@@ -79,6 +114,30 @@ export default function LoginPage() {
       
       if (res.ok && data.success) {
         setAuthCookie();
+        if (email.trim() === superAdmin) {
+          // Give super admin full permissions
+          localStorage.setItem('admin-permissions', JSON.stringify({
+            filter: 'all access',
+            product: 'all access',
+            seo: 'all access',
+            name: 'Super Admin',
+            email: superAdmin,
+          }));
+        } else {
+          // Fetch and store permissions for this email
+          try {
+            const role = await fetchRoleByEmail(email.trim());
+            if (role) {
+              localStorage.setItem('admin-permissions', JSON.stringify({
+                filter: role.filter,
+                product: role.product,
+                seo: role.seo,
+                name: role.name,
+                email: role.email,
+              }));
+            }
+          } catch {}
+        }
         router.push("/dashboard");
         setError("");
       } else {

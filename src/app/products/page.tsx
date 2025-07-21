@@ -12,6 +12,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import InputBase from '@mui/material/InputBase';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Image from 'next/image';
+import { apiFetch } from '../../utils/apiFetch';
 
 interface Product {
   _id?: string;
@@ -47,13 +48,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
 function getProductPagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
+  if (email && superAdmin && email === superAdmin) return 'full';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  let adminPerm = perms[email];
-  if (typeof adminPerm === 'string') {
-    try { adminPerm = JSON.parse(adminPerm); } catch {}
+  if (perms && perms.product) {
+    if (perms.product === 'all access') return 'full';
+    if (perms.product === 'only view') return 'view';
+    if (perms.product === 'no access') return 'denied';
   }
-  return adminPerm?.productPermission || 'denied';
+  return 'denied';
 }
 
 function getImageUrl(img: string | undefined): string | undefined {
@@ -169,7 +172,7 @@ export default function ProductPage() {
   const fetchDropdowns = useCallback(async () => {
     try {
       const results = await Promise.all(
-        dropdownFields.map(f => fetch(`${API_URL}/${f.key}`))
+        dropdownFields.map(f => apiFetch(`${API_URL}/${f.key}`))
       );
       const datas = await Promise.all(results.map(r => r.json()));
       const newDropdowns: { [key: string]: Option[] } = {};
@@ -185,7 +188,7 @@ export default function ProductPage() {
   const fetchProducts = useCallback(async () => {
     setProductsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/product`);
+      const res = await apiFetch(`${API_URL}/product`);
       const data = await res.json();
       setProducts(Array.isArray(data.data) ? (data.data as Product[]) : []);
     } finally {
@@ -379,7 +382,7 @@ export default function ProductPage() {
       if (form.video) formData.append("video", form.video as File);
       const url = editId ? `${API_URL}/product/${editId}` : `${API_URL}/product`;
       const method = editId ? "PUT" : "POST";
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         body: formData,
       });
@@ -399,7 +402,7 @@ export default function ProductPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await fetch(`${API_URL}/product/${deleteId}`, {
+      const res = await apiFetch(`${API_URL}/product/${deleteId}`, {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -493,7 +496,7 @@ export default function ProductPage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don&apost have permission to access this page.
+          You don&apos;t have permission to access this page.
         </Typography>
       </Box>
     );

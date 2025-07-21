@@ -32,6 +32,7 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import BusinessIcon from '@mui/icons-material/Business';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { keyframes } from '@mui/system';
+import { apiFetch } from '../../utils/apiFetch';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -307,9 +308,9 @@ export default function DashboardPage() {
         'category', 'color', 'content', 'design', 'finish', 'groupcode',
         'structure', 'subfinish', 'substructure', 'subsuitable', 'suitablefor', 'vendor'
       ];
-      const filterPromises = filterKeys.map(f => fetch(`${base}/${f}`).then(r => r.json()));
-      const productPromise = fetch(`${base}/product`).then(r => r.json());
-      const seoPromise = fetch(`${base}/seo`).then(r => r.json());
+      const filterPromises = filterKeys.map(f => apiFetch(`${base}/${f}`).then(r => r.json()));
+      const productPromise = apiFetch(`${base}/product`).then(r => r.json());
+      const seoPromise = apiFetch(`${base}/seo`).then(r => r.json());
       const results = await Promise.all([...filterPromises, productPromise, seoPromise]);
       const newCounts: { [key: string]: number } = {};
       filterKeys.forEach((f, i) => {

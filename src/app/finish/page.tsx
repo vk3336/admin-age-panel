@@ -8,7 +8,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import HomeIcon from '@mui/icons-material/Home';
 import AddIcon from '@mui/icons-material/Add';
-import { cachedFetch } from '../../utils/performance';
+import { apiFetch } from '../../utils/apiFetch';
 
 interface Finish {
   _id?: string;
@@ -102,7 +102,7 @@ export default function FinishPage() {
 
   const fetchFinishes = useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish`);
+      const data = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish`);
       setFinishes(data.data || []);
     } catch {}
   }, []);
@@ -136,7 +136,7 @@ export default function FinishPage() {
     try {
       const method = editId ? "PUT" : "POST";
       const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish${editId ? "/" + editId : ""}`;
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -152,7 +152,7 @@ export default function FinishPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

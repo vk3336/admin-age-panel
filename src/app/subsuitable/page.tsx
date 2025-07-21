@@ -10,12 +10,17 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { cachedFetch } from '../../utils/performance';
+import { apiFetch } from '../../utils/apiFetch';
+
+interface Suitablefor {
+  _id: string;
+  name: string;
+}
 
 interface Subsuitable {
   _id?: string;
   name: string;
-  suitablefor: string | { _id: string; name: string };
+  suitablefor: string | Suitablefor;
 }
 
 const SubsuitableRow = React.memo(({ subsuitable, onEdit, onDelete, viewOnly }: {
@@ -99,10 +104,14 @@ const SubsuitableForm = React.memo(({
   submitting: boolean;
   editId: string | null;
   viewOnly: boolean;
-  suitablefors: { _id: string; name: string }[];
+  suitablefors: Suitablefor[];
 }) => {
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+    const name = e.target.name;
+    const value = e.target.value;
+    if (name) {
+      setForm({ ...form, [name]: value });
+    }
   }, [form, setForm]);
 
   return (
@@ -225,22 +234,26 @@ const SubsuitableForm = React.memo(({
 
 SubsuitableForm.displayName = 'SubsuitableForm';
 
-function getFilterPermission() {
-  if (typeof window === 'undefined') return 'denied';
+function getSubsuitablePagePermission() {
+  if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+  if (email && superAdmin && email === superAdmin) return 'all access';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  return perms[email as string]?.filterPermission || 'denied';
+  if (perms && perms.filter) {
+    return perms.filter;
+  }
+  return 'no access';
 }
 
 export default function SubsuitablePage() {
   // All hooks at the top
-  const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
+  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
   const [subsuitables, setSubsuitables] = useState<Subsuitable[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Subsuitable>({ name: '', suitablefor: '' });
-  const [suitablefors, setSuitablefors] = useState<{ _id: string; name: string }[]>([]);
+  const [suitablefors, setSuitablefors] = useState<Suitablefor[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
@@ -249,27 +262,29 @@ export default function SubsuitablePage() {
 
   const fetchSubsuitables = useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/subsuitable`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api'}/subsuitable`);
+      const data = await res.json();
       setSubsuitables(data.data || []);
-    } finally {
+    } catch (error) {
+        console.error("Failed to fetch subsuitables:", error);
+    }
+  }, []);
+
+  const fetchSuitablefors = useCallback(async () => {
+    try {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api'}/suitablefor`);
+      const data = await res.json();
+      setSuitablefors(data.data || []);
+    } catch (error) {
+        console.error("Failed to fetch suitablefors:", error);
     }
   }, []);
 
   useEffect(() => {
-    // Check permission from localStorage
-    const permission = getFilterPermission();
-    setPageAccess(permission);
-  }, []);
-
-  useEffect(() => {
     fetchSubsuitables();
-  }, [fetchSubsuitables]);
-
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/suitablefor`)
-      .then(res => res.json())
-      .then(data => setSuitablefors(data.data || []));
-  }, []);
+    fetchSuitablefors();
+    setPageAccess(getSubsuitablePagePermission());
+  }, [fetchSubsuitables, fetchSuitablefors]);
 
   const handleOpen = useCallback((subsuitable: Subsuitable | null = null) => {
     setEditId(subsuitable?._id || null);
@@ -294,7 +309,7 @@ export default function SubsuitablePage() {
         ...form,
         suitablefor: typeof form.suitablefor === 'object' ? form.suitablefor._id : form.suitablefor,
       };
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -309,20 +324,11 @@ export default function SubsuitablePage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subsuitable/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data && data.message && data.message.includes("in use")) {
-          // setDeleteError("Cannot delete: Subsuitable is in use by one or more products."); // This line was removed
-        } else {
-          // setDeleteError(data.message || "Failed to delete subsuitable."); // This line was removed
-        }
-        return;
-      }
+      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subsuitable/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchSubsuitables();
-    } catch {
-      // setDeleteError("An error occurred while deleting the subsuitable."); // This line was removed
+    } catch (error) {
+        console.error("Failed to delete subsuitable:", error);
     }
   }, [deleteId, fetchSubsuitables]);
 
@@ -335,7 +341,7 @@ export default function SubsuitablePage() {
   }, []);
 
   // Permission check rendering
-  if (pageAccess === 'denied') {
+  if (pageAccess === 'no access') {
     return (
       <Box sx={{ 
         p: 4, 
@@ -362,7 +368,7 @@ export default function SubsuitablePage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'view' && (
+      {pageAccess === 'only view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>
@@ -416,7 +422,7 @@ export default function SubsuitablePage() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
-          disabled={pageAccess === 'view'}
+          disabled={pageAccess === 'only view'}
           sx={{
             fontWeight: 500,
             borderRadius: '6px',
@@ -536,7 +542,7 @@ export default function SubsuitablePage() {
                     subsuitable={subsuitable}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
-                    viewOnly={pageAccess === 'view'}
+                    viewOnly={pageAccess === 'only view'}
                   />
                 ))}
                 {paginatedSubsuitables.length === 0 && (
@@ -579,7 +585,7 @@ export default function SubsuitablePage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
-        viewOnly={pageAccess === 'view'}
+        viewOnly={pageAccess === 'only view'}
         suitablefors={suitablefors}
       />
 
@@ -615,7 +621,7 @@ export default function SubsuitablePage() {
               borderRadius: '6px',
               color: 'text.secondary',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Cancel
           </Button>
@@ -627,7 +633,7 @@ export default function SubsuitablePage() {
               fontWeight: 500, 
               borderRadius: '6px',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Delete
           </Button>

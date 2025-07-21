@@ -12,6 +12,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Image from 'next/image';
+import { apiFetch } from '../../utils/apiFetch';
 
 interface Groupcode {
   _id?: string;
@@ -328,13 +329,15 @@ GroupcodeForm.displayName = 'GroupcodeForm';
 function getGroupcodePagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
+  if (email && superAdmin && email === superAdmin) return 'full';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  let adminPerm = email ? perms[email] : undefined;
-  if (typeof adminPerm === 'string') {
-    try { adminPerm = JSON.parse(adminPerm); } catch {}
+  if (perms && perms.filter) {
+    if (perms.filter === 'all access') return 'full';
+    if (perms.filter === 'only view') return 'view';
+    if (perms.filter === 'no access') return 'denied';
   }
-  return adminPerm?.filterPermission || 'denied';
+  return 'denied';
 }
 
 export default function GroupcodePage() {
@@ -361,7 +364,7 @@ export default function GroupcodePage() {
 
   const fetchGroupcodes = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode`);
       const data = await res.json();
       setGroupcodes(data.data || []);
     } finally {
@@ -410,7 +413,7 @@ export default function GroupcodePage() {
       formData.append("name", form.name);
       if (isFile(form.img)) formData.append("img", form.img);
       if (isFile(form.video)) formData.append("video", form.video);
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         body: formData,
         // Do NOT set Content-Type, browser will set it automatically
@@ -426,7 +429,7 @@ export default function GroupcodePage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

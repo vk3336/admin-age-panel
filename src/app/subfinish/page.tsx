@@ -229,13 +229,15 @@ SubfinishForm.displayName = 'SubfinishForm';
 function getSubfinishPagePermission() {
   if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
+  if (email && superAdmin && email === superAdmin) return 'full';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  let adminPerm = email ? perms[email] : undefined;
-  if (typeof adminPerm === 'string') {
-    try { adminPerm = JSON.parse(adminPerm); } catch {}
+  if (perms && perms.filter) {
+    if (perms.filter === 'all access') return 'full';
+    if (perms.filter === 'only view') return 'view';
+    if (perms.filter === 'no access') return 'denied';
   }
-  return adminPerm?.filterPermission || 'denied';
+  return 'denied';
 }
 
 export default function SubfinishPage() {

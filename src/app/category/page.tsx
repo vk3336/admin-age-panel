@@ -34,7 +34,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { cachedFetch } from '../../utils/performance';
+import { apiFetch } from '../../utils/apiFetch';
 
 interface Category {
   _id?: string;
@@ -296,15 +296,15 @@ const CategoryForm = React.memo(({
 CategoryForm.displayName = 'CategoryForm';
 
 function getCategoryPagePermission() {
-  if (typeof window === 'undefined') return 'denied';
+  if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
+  if (email && superAdmin && email === superAdmin) return 'all access';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  let adminPerm = email ? perms[email] : undefined;
-  if (typeof adminPerm === 'string') {
-    try { adminPerm = JSON.parse(adminPerm); } catch {}
+  if (perms && perms.filter) {
+    return perms.filter;
   }
-  return adminPerm?.filterPermission || 'denied';
+  return 'no access';
 }
 
 function isFile(value: unknown): value is File {
@@ -313,7 +313,7 @@ function isFile(value: unknown): value is File {
 
 export default function CategoryPage() {
   // All hooks at the top
-  const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
+  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
   const [categories, setCategories] = useState<Category[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -328,7 +328,7 @@ export default function CategoryPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category`);
+      const data = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category`);
       setCategories(data.data || []);
     } finally {
     }
@@ -372,7 +372,7 @@ export default function CategoryPage() {
       }
       const method = editId ? "PUT" : "POST";
       const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category${editId ? "/" + editId : ""}`;
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         body: formData,
       });
@@ -387,7 +387,7 @@ export default function CategoryPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {
@@ -411,7 +411,7 @@ export default function CategoryPage() {
   }, []);
 
   // Permission check rendering
-  if (pageAccess === 'denied') {
+  if (pageAccess === 'no access') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" sx={{ color: '#e74c3c', mb: 2 }}>
@@ -434,7 +434,7 @@ export default function CategoryPage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'view' && (
+      {pageAccess === 'only view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>
@@ -488,7 +488,7 @@ export default function CategoryPage() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
-          disabled={pageAccess === 'view'}
+          disabled={pageAccess === 'only view'}
           sx={{
             fontWeight: 500,
             borderRadius: '6px',
@@ -608,7 +608,7 @@ export default function CategoryPage() {
                     category={category}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
-                    viewOnly={pageAccess === 'view'}
+                    viewOnly={pageAccess === 'only view'}
                   />
                 ))}
                 {paginatedCategories.length === 0 && (
@@ -653,7 +653,7 @@ export default function CategoryPage() {
         editId={editId}
         imagePreview={imagePreview}
         onImageChange={handleImageChange}
-        viewOnly={pageAccess === 'view'}
+        viewOnly={pageAccess === 'only view'}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -688,7 +688,7 @@ export default function CategoryPage() {
               borderRadius: '6px',
               color: 'text.secondary',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Cancel
           </Button>
@@ -700,7 +700,7 @@ export default function CategoryPage() {
               fontWeight: 500, 
               borderRadius: '6px',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Delete
           </Button>
