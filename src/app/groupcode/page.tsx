@@ -367,9 +367,7 @@ export default function GroupcodePage() {
       const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode`);
       const data = await res.json();
       setGroupcodes(data.data || []);
-    } finally {
-      // setLoading(false); // Removed loading state
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {

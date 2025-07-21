@@ -6,6 +6,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
 import { apiFetch } from '../../utils/apiFetch';
+import { AdminRole } from '../types';
 
 export default function LoginPage() {
   const [step, setStep] = useState<1 | 2>(1);
@@ -30,7 +31,7 @@ export default function LoginPage() {
     const res = await apiFetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7000'}/api/roles`);
     if (!res.ok) throw new Error('Failed to fetch roles');
     const data = await res.json();
-    return data.find((role: any) => role.email.toLowerCase() === email.toLowerCase());
+    return data.find((role: AdminRole) => role.email.toLowerCase() === email.toLowerCase());
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {

@@ -102,7 +102,8 @@ export default function FinishPage() {
 
   const fetchFinishes = useCallback(async () => {
     try {
-      const data = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish`);
+      const data = await res.json();
       setFinishes(data.data || []);
     } catch {}
   }, []);

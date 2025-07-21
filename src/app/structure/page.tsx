@@ -213,10 +213,10 @@ export default function StructurePage() {
 
   const fetchStructures = useCallback(async () => {
     try {
-      const data = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/structure`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/structure`);
+      const data = await res.json();
       setStructures(data.data || []);
-    } finally {
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {

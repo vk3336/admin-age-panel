@@ -81,7 +81,7 @@ const SEO_FIELDS = [
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
 
 function getSeoPagePermission() {
-  if (typeof window === 'undefined') return 'denied';
+  if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
   const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
   if (email && superAdmin && email === superAdmin) return 'all access';
@@ -119,7 +119,7 @@ function SeoPage() {
   const [submitting, setSubmitting] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedSeo, setSelectedSeo] = useState<Record<string, unknown> | null>(null);
-  const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
+  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
 
   // Fetch products for dropdown
   useEffect(() => {
@@ -277,7 +277,7 @@ function SeoPage() {
           Access Denied
         </Typography>
         <Typography variant="body1" sx={{ color: '#7f8c8d' }}>
-          You don&apost have permission to access this page.
+          You don&apos;t have permission to access this page.
         </Typography>
       </Box>
     );
@@ -304,7 +304,7 @@ function SeoPage() {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => handleOpen()}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
             sx={{
               bgcolor: '#3498db',
               '&:hover': { bgcolor: '#2980b9' },
@@ -407,9 +407,9 @@ function SeoPage() {
                   <TableCell>{seo.topratedproduct ? "Yes" : "No"}</TableCell>
                   <TableCell>{typeof seo.rating_value === 'number' ? seo.rating_value : '-'}</TableCell>
                   <TableCell>
-                    <IconButton color="primary" onClick={() => handleOpen(seo)} disabled={pageAccess === 'view'}><EditIcon /></IconButton>
+                    <IconButton color="primary" onClick={() => handleOpen(seo)} disabled={pageAccess === 'only view'}><EditIcon /></IconButton>
                     <IconButton color="info" onClick={() => { setSelectedSeo(seo); setViewOpen(true); }}><VisibilityIcon /></IconButton>
-                    <IconButton color="error" onClick={() => typeof seo._id === 'string' && handleDelete(seo._id)} disabled={pageAccess === 'view'}><DeleteIcon /></IconButton>
+                    <IconButton color="error" onClick={() => typeof seo._id === 'string' && handleDelete(seo._id)} disabled={pageAccess === 'only view'}><DeleteIcon /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -462,7 +462,7 @@ function SeoPage() {
                     }
                     onChange={(_event: React.SyntheticEvent, value: { label: string; value: string; img?: string } | null) => handleProductChange(_event, value)}
                     renderInput={(params) => (
-                      <TextField {...params} label={field.label} name={field.key} required disabled={pageAccess === 'view'} />
+                      <TextField {...params} label={field.label} name={field.key} required disabled={pageAccess === 'only view'} />
                     )}
                     renderOption={(props, option, { index }) => (
                       <ListItem {...props} key={option.value || option.label || index}>
@@ -474,7 +474,7 @@ function SeoPage() {
                         <ListItemText primary={typeof option.label === 'string' ? option.label : '-'} />
                       </ListItem>
                     )}
-                    disabled={pageAccess === 'view'}
+                    disabled={pageAccess === 'only view'}
                     sx={{ minWidth: 220 }}
                   />
                 );
@@ -485,7 +485,7 @@ function SeoPage() {
                   control={<Checkbox checked={!!form[field.key]} onChange={handleChange} name={field.key} />}
                   label={field.label}
                   sx={{ minWidth: 220 }}
-                  disabled={pageAccess === 'view'}
+                  disabled={pageAccess === 'only view'}
                 />
                 );
               } else {
@@ -522,7 +522,7 @@ function SeoPage() {
                   type={field.type}
                   fullWidth
                   sx={{ minWidth: 220 }}
-                  disabled={pageAccess === 'view'}
+                  disabled={pageAccess === 'only view'}
                     helperText={field.key === 'openGraph.images' ? 'Separate multiple images with commas' : ''}
                 />
                 );
@@ -530,8 +530,8 @@ function SeoPage() {
             })}
           </DialogContent>
           <DialogActions sx={{ pr: 3, pb: 2 }}>
-            <Button onClick={handleClose} sx={{ fontWeight: 700, borderRadius: 3 }} disabled={pageAccess === 'view'}>Cancel</Button>
-            <Button type="submit" variant="contained" sx={{ fontWeight: 900, borderRadius: 3 }} disabled={pageAccess === 'view' || submitting}>{editId ? "Update" : "Add"}</Button>
+            <Button onClick={handleClose} sx={{ fontWeight: 700, borderRadius: 3 }} disabled={pageAccess === 'only view'}>Cancel</Button>
+            <Button type="submit" variant="contained" sx={{ fontWeight: 900, borderRadius: 3 }} disabled={pageAccess === 'only view' || submitting}>{editId ? "Update" : "Add"}</Button>
           </DialogActions>
         </form>
       </Dialog>

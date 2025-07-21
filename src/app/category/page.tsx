@@ -328,7 +328,8 @@ export default function CategoryPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const data = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category`);
+      const data = await res.json();
       setCategories(data.data || []);
     } finally {
     }

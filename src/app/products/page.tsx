@@ -46,17 +46,15 @@ interface Option { _id: string; name: string; }
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
 
 function getProductPagePermission() {
-  if (typeof window === 'undefined') return 'denied';
+  if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
   const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
-  if (email && superAdmin && email === superAdmin) return 'full';
+  if (email && superAdmin && email === superAdmin) return 'all access';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
   if (perms && perms.product) {
-    if (perms.product === 'all access') return 'full';
-    if (perms.product === 'only view') return 'view';
-    if (perms.product === 'no access') return 'denied';
+    return perms.product;
   }
-  return 'denied';
+  return 'no access';
 }
 
 function getImageUrl(img: string | undefined): string | undefined {
@@ -79,7 +77,7 @@ function isNameObject(val: unknown): val is { name: string } {
 }
 
 export default function ProductPage() {
-  const [pageAccess, setPageAccess] = useState('denied');
+  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
   const [products, setProducts] = useState<Product[]>([]);
   const [dropdowns, setDropdowns] = useState<{ [key: string]: Option[] }>({});
   const [productsLoading, setProductsLoading] = useState(false);
@@ -489,7 +487,7 @@ export default function ProductPage() {
     }
   }, [form.cm, form.inch]);
 
-  if (pageAccess === 'denied') {
+  if (pageAccess === 'no access') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" sx={{ color: '#e74c3c', mb: 2 }}>
@@ -504,7 +502,7 @@ export default function ProductPage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'view' && (
+      {pageAccess === 'only view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>
@@ -526,7 +524,7 @@ export default function ProductPage() {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => handleOpen()}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
             sx={{
               bgcolor: '#3498db',
               '&:hover': { bgcolor: '#2980b9' },
@@ -680,7 +678,7 @@ export default function ProductPage() {
                         <IconButton
                           size="small"
                           onClick={() => handleOpen(product)}
-                          disabled={pageAccess === 'view'}
+                          disabled={pageAccess === 'only view'}
                           sx={{ color: '#f39c12' }}
                         >
                           <EditIcon />
@@ -688,7 +686,7 @@ export default function ProductPage() {
                         <IconButton
                           size="small"
                           onClick={() => setDeleteId(product._id || null)}
-                          disabled={pageAccess === 'view'}
+                          disabled={pageAccess === 'only view'}
                           sx={{ color: '#e74c3c' }}
                         >
                           <DeleteIcon />
@@ -733,7 +731,7 @@ export default function ProductPage() {
               <TextField {...params} label="Copy From Product" placeholder="Type or select to copy..." />
             )}
             sx={{ minWidth: 220, mb: 2 }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           />
             <TextField
               label="Product Name"
@@ -741,7 +739,7 @@ export default function ProductPage() {
               onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
               fullWidth
               required
-              InputProps={{ readOnly: pageAccess === 'view' }}
+              InputProps={{ readOnly: pageAccess === 'only view' }}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '8px',
@@ -759,7 +757,7 @@ export default function ProductPage() {
                   sx={{
                     borderRadius: '8px',
                   }}
-                  disabled={pageAccess === 'view'}
+                  disabled={pageAccess === 'only view'}
                 >
                   {dropdowns[field.key]?.map((option: Option) => (
                     <MenuItem key={option._id} value={option._id}>
@@ -777,7 +775,7 @@ export default function ProductPage() {
                 onChange={e => setForm(prev => ({ ...prev, um: e.target.value }))}
                 label="UM"
                 sx={{ borderRadius: '8px' }}
-                disabled={pageAccess === 'view'}
+                disabled={pageAccess === 'only view'}
               >
                 {umOptions.map(opt => (
                   <MenuItem key={opt} value={opt}>{opt}</MenuItem>
@@ -790,9 +788,9 @@ export default function ProductPage() {
               value={form.currency || ""}
               onInputChange={(_, value) => setForm(prev => ({ ...prev, currency: value }))}
               renderInput={(params) => (
-                <TextField {...params} label="Currency" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} disabled={pageAccess === 'view'} />
+                <TextField {...params} label="Currency" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} disabled={pageAccess === 'only view'} />
               )}
-              disabled={pageAccess === 'view'}
+              disabled={pageAccess === 'only view'}
             />
             <TextField
               label="GSM"
@@ -800,7 +798,7 @@ export default function ProductPage() {
               value={form.gsm || ""}
               onChange={e => setForm(prev => ({ ...prev, gsm: e.target.value }))}
               fullWidth
-              disabled={pageAccess === 'view'}
+              disabled={pageAccess === 'only view'}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
             <TextField
@@ -817,7 +815,7 @@ export default function ProductPage() {
               value={form.cm || ""}
               onChange={e => setForm(prev => ({ ...prev, cm: e.target.value }))}
               fullWidth
-              disabled={pageAccess === 'view'}
+              disabled={pageAccess === 'only view'}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
             <TextField
@@ -834,7 +832,7 @@ export default function ProductPage() {
               value={form.quantity || ""}
               onChange={e => setForm(prev => ({ ...prev, quantity: e.target.value }))}
               fullWidth
-              disabled={pageAccess === 'view'}
+              disabled={pageAccess === 'only view'}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
             <Box>
@@ -849,7 +847,7 @@ export default function ProductPage() {
                 variant="outlined"
                 onClick={() => fileInputRef.current?.click()}
                 startIcon={<ImageIcon />}
-                disabled={pageAccess === 'view'}
+                disabled={pageAccess === 'only view'}
                 sx={{
                   borderRadius: '8px',
                   borderColor: '#bdc3c7',
@@ -886,7 +884,7 @@ export default function ProductPage() {
                 variant="outlined"
                 onClick={() => image1InputRef.current?.click()}
                 startIcon={<ImageIcon />}
-                disabled={pageAccess === 'view'}
+                disabled={pageAccess === 'only view'}
                 sx={{
                   borderRadius: '8px',
                   borderColor: '#bdc3c7',
@@ -923,7 +921,7 @@ export default function ProductPage() {
                 variant="outlined"
                 onClick={() => image2InputRef.current?.click()}
                 startIcon={<ImageIcon />}
-                disabled={pageAccess === 'view'}
+                disabled={pageAccess === 'only view'}
                 sx={{
                   borderRadius: '8px',
                   borderColor: '#bdc3c7',
@@ -967,7 +965,7 @@ export default function ProductPage() {
                 variant="outlined"
                 onClick={() => videoInputRef.current?.click()}
                 startIcon={<ImageIcon />}
-                disabled={pageAccess === 'view'}
+                disabled={pageAccess === 'only view'}
                 sx={{
                   borderRadius: '8px',
                   borderColor: '#bdc3c7',
@@ -998,7 +996,7 @@ export default function ProductPage() {
           <Button
             onClick={handleSubmit}
             variant="contained"
-            disabled={pageAccess === 'view' || submitting}
+            disabled={pageAccess === 'only view' || submitting}
             sx={{
               bgcolor: '#3498db',
               '&:hover': { bgcolor: '#2980b9' },
@@ -1221,7 +1219,7 @@ export default function ProductPage() {
               '&:hover': { bgcolor: '#c0392b' },
               borderRadius: '8px'
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Delete
           </Button>

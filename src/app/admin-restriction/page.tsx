@@ -5,8 +5,6 @@ import {
   Typography,
   Paper,
   Avatar,
-  Chip,
-  Alert,
   MenuItem,
   FormControl,
   Select,
@@ -21,15 +19,15 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import SearchIcon from '@mui/icons-material/Search';
 import CircularProgress from '@mui/material/CircularProgress';
-import Checkbox from '@mui/material/Checkbox';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Tooltip from '@mui/material/Tooltip';
 import { apiFetch } from "@/utils/apiFetch"; // Import the new apiFetch utility
+import { AdminRole } from '../types';
 
 const AdminRestrictionPage = () => {
-  const [admins, setAdmins] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<AdminRole[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [addForm, setAddForm] = useState({ name: '', email: '', filter: 'all access', product: 'all access', seo: 'all access' });
@@ -54,14 +52,15 @@ const AdminRestrictionPage = () => {
       if (!res.ok) throw new Error('Failed to fetch roles');
       const data = await res.json();
       console.log('Fetched admins:', data); // Debug: log backend data
-      setAdmins((data as any[]).map((a: any) => ({
+      setAdmins((data as AdminRole[]).map((a: AdminRole) => ({
         ...a,
-        filter: ['all access', 'only view', 'no access'].includes((a.filter || '').trim()) ? a.filter.trim() : 'no access',
-        product: ['all access', 'only view', 'no access'].includes((a.product || '').trim()) ? a.product.trim() : 'no access',
-        seo: ['all access', 'only view', 'no access'].includes((a.seo || '').trim()) ? a.seo.trim() : 'no access',
+        filter: ['all access', 'only view', 'no access'].includes((a.filter || '').trim()) ? a.filter.trim() as AdminRole['filter'] : 'no access',
+        product: ['all access', 'only view', 'no access'].includes((a.product || '').trim()) ? a.product.trim() as AdminRole['product'] : 'no access',
+        seo: ['all access', 'only view', 'no access'].includes((a.seo || '').trim()) ? a.seo.trim() as AdminRole['seo'] : 'no access',
       })));
-    } catch (err: any) {
-      setSnackbar({ open: true, message: err.message || 'Error loading admins', severity: 'error' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setSnackbar({ open: true, message, severity: 'error' });
     }
     setLoading(false);
   };
@@ -72,7 +71,7 @@ const AdminRestrictionPage = () => {
 
   // Update permission
   const handlePermissionChange = async (id: string, type: 'filter' | 'product' | 'seo', value: string) => {
-    const admin = admins.find((a: any) => a._id === id);
+    const admin = admins.find((a: AdminRole) => a._id === id);
     if (!admin) return;
     const updated = { ...admin, [type]: value };
     try {
@@ -95,8 +94,9 @@ const AdminRestrictionPage = () => {
       }
       await fetchAdmins();
       setSnackbar({ open: true, message: 'Permission updated', severity: 'success' });
-    } catch (err: any) {
-      setSnackbar({ open: true, message: err.message || 'Error updating permission', severity: 'error' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setSnackbar({ open: true, message, severity: 'error' });
     }
   };
 
@@ -124,8 +124,9 @@ const AdminRestrictionPage = () => {
       setAddForm({ name: '', email: '', filter: 'all access', product: 'all access', seo: 'all access' });
       fetchAdmins();
       setSnackbar({ open: true, message: 'Admin added', severity: 'success' });
-    } catch (err: any) {
-      setSnackbar({ open: true, message: err.message || 'Error adding admin', severity: 'error' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setSnackbar({ open: true, message, severity: 'error' });
     }
   };
 
@@ -136,10 +137,11 @@ const AdminRestrictionPage = () => {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete admin');
-      setAdmins((prev: any[]) => prev.filter(a => a._id !== id));
+      setAdmins((prev: AdminRole[]) => prev.filter(a => a._id !== id));
       setSnackbar({ open: true, message: 'Admin deleted', severity: 'success' });
-    } catch (err: any) {
-      setSnackbar({ open: true, message: err.message || 'Error deleting admin', severity: 'error' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setSnackbar({ open: true, message, severity: 'error' });
     }
   };
 
@@ -265,7 +267,7 @@ const AdminRestrictionPage = () => {
             No admins found. Add an admin to get started.
           </Paper>
         )}
-        {admins.map((admin: any, idx: number) => (
+        {admins.map((admin: AdminRole, idx: number) => (
           <Paper
             key={admin._id}
             elevation={2}
