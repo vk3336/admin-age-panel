@@ -264,7 +264,7 @@ export default function SubstructurePage() {
 
   const fetchSubstructures = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api'}/substructure`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/substructure`);
       const data = await res.json();
       setSubstructures(data.data || []);
     } catch (error) {
@@ -274,7 +274,7 @@ export default function SubstructurePage() {
 
   const fetchStructures = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api'}/structure`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/structure`);
       const data = await res.json();
       setStructures(data.data || []);
     } catch (error) {
@@ -326,7 +326,7 @@ export default function SubstructurePage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/substructure/${deleteId}`, { method: "DELETE" });
+      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/substructure/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchSubstructures();
     } catch (error) {

@@ -262,7 +262,7 @@ export default function SubsuitablePage() {
 
   const fetchSubsuitables = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api'}/subsuitable`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/subsuitable`);
       const data = await res.json();
       setSubsuitables(data.data || []);
     } catch (error) {
@@ -272,7 +272,7 @@ export default function SubsuitablePage() {
 
   const fetchSuitablefors = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api'}/suitablefor`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/suitablefor`);
       const data = await res.json();
       setSuitablefors(data.data || []);
     } catch (error) {
@@ -324,7 +324,7 @@ export default function SubsuitablePage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subsuitable/${deleteId}`, { method: "DELETE" });
+      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/subsuitable/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchSubsuitables();
     } catch (error) {

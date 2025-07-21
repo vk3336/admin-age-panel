@@ -145,7 +145,7 @@ export default function ContentPage() {
 
   const fetchContents = useCallback(async () => {
     try {
-      const data = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/content`).then(res => res.json());
+      const data = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/content`).then(res => res.json());
       setContents(data.data || []);
     } catch {}
   }, []);
@@ -156,7 +156,7 @@ export default function ContentPage() {
       if (!email) {
         return;
       }
-      const res = await apiFetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/allowed-admins-permissions`);
       const data = await res.json();
       if (data.success) {
         // const admin = data.data.find((a: { email: string }) => a.email === email);
@@ -200,7 +200,7 @@ export default function ContentPage() {
     
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/content${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/content${editId ? "/" + editId : ""}`;
       
       const response = await apiFetch(url, {
         method,
@@ -233,7 +233,7 @@ export default function ContentPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/content/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/content/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

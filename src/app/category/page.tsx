@@ -328,7 +328,7 @@ export default function CategoryPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/category`);
       const data = await res.json();
       setCategories(data.data || []);
     } finally {
@@ -372,7 +372,7 @@ export default function CategoryPage() {
         formData.append("image", form.image);
       }
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/category${editId ? "/" + editId : ""}`;
       await apiFetch(url, {
         method,
         body: formData,
@@ -388,7 +388,7 @@ export default function CategoryPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/category/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/category/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

@@ -213,7 +213,7 @@ export default function StructurePage() {
 
   const fetchStructures = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/structure`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/structure`);
       const data = await res.json();
       setStructures(data.data || []);
     } catch {}
@@ -241,7 +241,7 @@ export default function StructurePage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/structure${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/structure${editId ? "/" + editId : ""}`;
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -258,7 +258,7 @@ export default function StructurePage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/structure/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/structure/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

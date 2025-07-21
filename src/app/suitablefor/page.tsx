@@ -214,7 +214,7 @@ export default function SuitableforPage() {
 
   const fetchSuitablefors = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/suitablefor`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/suitablefor`);
       const data = await res.json();
       setSuitablefors(data.data || []);
     } catch (error) {
@@ -244,7 +244,7 @@ export default function SuitableforPage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/suitablefor${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/suitablefor${editId ? "/" + editId : ""}`;
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -261,7 +261,7 @@ export default function SuitableforPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/suitablefor/${deleteId}`, { method: "DELETE" });
+      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/suitablefor/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchSuitablefors();
     } catch (error) {

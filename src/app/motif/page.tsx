@@ -106,7 +106,7 @@ export default function MotifPage() {
 
   const fetchMotifs = useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif`);
+      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/motif`);
       setMotifs(data.data || []);
     } catch {}
   }, []);
@@ -117,7 +117,7 @@ export default function MotifPage() {
       if (!email) {
         return;
       }
-      const res = await fetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/allowed-admins-permissions`);
       const data = await res.json();
       if (data.success) {
       } else {
@@ -154,7 +154,7 @@ export default function MotifPage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/motif${editId ? "/" + editId : ""}`;
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -171,7 +171,7 @@ export default function MotifPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/motif/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/motif/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

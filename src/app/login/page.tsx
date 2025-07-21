@@ -27,11 +27,24 @@ export default function LoginPage() {
     localStorage.setItem("admin-email", email.trim());
   };
 
-  const fetchRoleByEmail = async (email: string) => {
-    const res = await apiFetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7000'}/api/roles`);
-    if (!res.ok) throw new Error('Failed to fetch roles');
-    const data = await res.json();
-    return data.find((role: AdminRole) => role.email.toLowerCase() === email.toLowerCase());
+  const fetchRoleByEmail = async (email: string): Promise<AdminRole | null> => {
+    try {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/roles`);
+      if (!res.ok) {
+        console.error('Failed to fetch roles:', res.status, res.statusText);
+        return null;
+      }
+      const data = await res.json();
+      if (!Array.isArray(data)) {
+        console.error('Roles data is not an array:', data);
+        return null;
+      }
+      return data.find((role: AdminRole) => role.email.toLowerCase() === email.toLowerCase()) || null;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Error fetching role by email:', message);
+      return null;
+    }
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -45,49 +58,29 @@ export default function LoginPage() {
     setError("");
     
     try {
-      const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
-      if (email.trim() === superAdmin) {
-        // Allow super admin to send OTP
-        const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/sendotp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim() }),
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          setStep(2);
-          setError("");
-        } else {
-          setError(data.message || "Invalid email address or failed to send OTP.");
-        }
-        setLoading(false);
-        return;
-      }
-      // Check if email exists in roles collection
       const role = await fetchRoleByEmail(email.trim());
       if (!role) {
-        setError("This email is not allowed. Please use an authorized admin email.");
+        setError("This email is not authorized. Please contact your administrator.");
         setLoading(false);
         return;
       }
-      // Proceed to send OTP
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/sendotp`, {
+
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/sendotp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
       });
+      
       const data = await res.json();
       
       if (res.ok && data.success) {
         setStep(2);
-        setError("");
-      } else if (res.status === 403) {
-        setError("This email is not allowed. Please use an authorized admin email.");
       } else {
-        setError(data.message || "Invalid email address or failed to send OTP.");
+        setError(data.message || "Failed to send OTP. Please try again.");
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      console.error('Error sending OTP:', err);
+      setError("An unexpected network error occurred. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -105,7 +98,7 @@ export default function LoginPage() {
     
     try {
       const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/admin/verifyotp`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/verifyotp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), otp: otp.trim() }),
@@ -115,37 +108,42 @@ export default function LoginPage() {
       
       if (res.ok && data.success) {
         setAuthCookie();
-        if (email.trim() === superAdmin) {
-          // Give super admin full permissions
+        
+        const role = await fetchRoleByEmail(email.trim());
+        if (role) {
           localStorage.setItem('admin-permissions', JSON.stringify({
-            filter: 'all access',
-            product: 'all access',
-            seo: 'all access',
-            name: 'Super Admin',
-            email: superAdmin,
+            filter: role.filter || 'no access',
+            product: role.product || 'no access',
+            seo: role.seo || 'no access',
+            name: role.name,
+            email: role.email,
           }));
         } else {
-          // Fetch and store permissions for this email
-          try {
-            const role = await fetchRoleByEmail(email.trim());
-            if (role) {
-              localStorage.setItem('admin-permissions', JSON.stringify({
-                filter: role.filter,
-                product: role.product,
-                seo: role.seo,
-                name: role.name,
-                email: role.email,
-              }));
-            }
-          } catch {}
+          // Fallback for super admin if not in roles DB
+          const superAdminEmail = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+          if (email.trim().toLowerCase() === superAdminEmail?.toLowerCase()) {
+            localStorage.setItem('admin-permissions', JSON.stringify({
+              filter: 'all access',
+              product: 'all access',
+              seo: 'all access',
+              name: 'Super Admin',
+              email: superAdminEmail,
+            }));
+          } else {
+            console.error("Logged in user has no role defined and is not super admin.");
+            setError("Your user has no permissions configured. Please contact an administrator.");
+            setLoading(false);
+            return;
+          }
         }
+        
         router.push("/dashboard");
-        setError("");
       } else {
-        setError(data.message || "Invalid OTP or email.");
+        setError(data.message || "Invalid OTP. Please try again.");
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      console.error('Error verifying OTP:', err);
+      setError("An unexpected network error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

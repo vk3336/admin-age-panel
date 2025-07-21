@@ -219,7 +219,7 @@ export default function VendorPage() {
 
   const fetchVendors = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/vendor`);
       const data = await res.json();
       setVendors(data.data || []);
     } catch (error) {
@@ -234,7 +234,7 @@ export default function VendorPage() {
         return;
       }
       try {
-        await apiFetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
+        await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/allowed-admins-permissions`);
       } catch (error) {
         console.error("Permission check failed:", error);
       }
@@ -270,7 +270,7 @@ export default function VendorPage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/vendor${editId ? "/" + editId : ""}`;
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -286,7 +286,7 @@ export default function VendorPage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/vendor/${deleteId}`, { method: "DELETE" });
+      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/vendor/${deleteId}`, { method: "DELETE" });
       setDeleteId(null);
       fetchVendors();
     } catch (error) {

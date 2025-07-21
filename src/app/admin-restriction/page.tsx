@@ -48,7 +48,7 @@ const AdminRestrictionPage = () => {
   const fetchAdmins = async () => {
     setLoading(true);
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7000'}/api/roles`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/roles`);
       if (!res.ok) throw new Error('Failed to fetch roles');
       const data = await res.json();
       console.log('Fetched admins:', data); // Debug: log backend data
@@ -75,7 +75,7 @@ const AdminRestrictionPage = () => {
     if (!admin) return;
     const updated = { ...admin, [type]: value };
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7000'}/api/roles/${id}`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/roles/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ const AdminRestrictionPage = () => {
       return;
     }
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7000'}/api/roles`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/roles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ const AdminRestrictionPage = () => {
   // Delete admin
   const handleDeleteAdmin = async (id: string) => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7000'}/api/roles/${id}`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/roles/${id}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete admin');

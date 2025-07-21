@@ -364,7 +364,7 @@ export default function GroupcodePage() {
 
   const fetchGroupcodes = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/groupcode`);
       const data = await res.json();
       setGroupcodes(data.data || []);
     } catch {}
@@ -406,7 +406,7 @@ export default function GroupcodePage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/groupcode${editId ? "/" + editId : ""}`;
       const formData = new FormData();
       formData.append("name", form.name);
       if (isFile(form.img)) formData.append("img", form.img);
@@ -427,7 +427,7 @@ export default function GroupcodePage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/groupcode/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/groupcode/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

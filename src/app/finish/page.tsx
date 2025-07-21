@@ -102,7 +102,7 @@ export default function FinishPage() {
 
   const fetchFinishes = useCallback(async () => {
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/finish`);
       const data = await res.json();
       setFinishes(data.data || []);
     } catch {}
@@ -136,7 +136,7 @@ export default function FinishPage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/finish${editId ? "/" + editId : ""}`;
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -153,7 +153,7 @@ export default function FinishPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/finish/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/finish/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

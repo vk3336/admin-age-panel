@@ -106,7 +106,7 @@ export default function DesignPage() {
 
   const fetchDesigns = React.useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/design`);
+      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/design`);
       setDesigns(data.data || []);
     } catch {}
   }, []);
@@ -118,7 +118,7 @@ export default function DesignPage() {
         // setAllowed(false);
         return;
       }
-      const res = await fetch(`http://localhost:7000/api/admin/allowed-admins-permissions`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/allowed-admins-permissions`);
       const data = await res.json();
       if (data.success) {
         // const admin = data.data.find((a: { email: string }) => a.email === email);
@@ -158,7 +158,7 @@ export default function DesignPage() {
     setSubmitting(true);
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/design${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/design${editId ? "/" + editId : ""}`;
       await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -175,7 +175,7 @@ export default function DesignPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/design/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/design/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

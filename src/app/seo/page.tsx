@@ -78,7 +78,7 @@ const SEO_FIELDS = [
   { key: "author_name", label: "Author Name", type: "text" },
 ];
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 function getSeoPagePermission() {
   if (typeof window === 'undefined') return 'no access';

@@ -99,7 +99,7 @@ export default function ColorPage() {
 
   const fetchColors = useCallback(async () => {
     try {
-      const data = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/color`).then(res => res.json());
+      const data = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/color`).then(res => res.json());
       setColors(data.data || []);
     } catch {}
   }, []);
@@ -126,7 +126,7 @@ export default function ColorPage() {
     // setSubmitting(true); // This line was removed as per the edit hint
     try {
       const method = editId ? "PUT" : "POST";
-      const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/color${editId ? "/" + editId : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/color${editId ? "/" + editId : ""}`;
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -143,7 +143,7 @@ export default function ColorPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/color/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/color/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

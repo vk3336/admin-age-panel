@@ -43,7 +43,7 @@ interface Product {
 
 interface Option { _id: string; name: string; }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 function getProductPagePermission() {
   if (typeof window === 'undefined') return 'no access';

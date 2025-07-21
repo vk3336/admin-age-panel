@@ -318,7 +318,7 @@ export default function SubfinishPage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api"}/subfinish/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subfinish/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

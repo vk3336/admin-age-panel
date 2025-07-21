@@ -302,25 +302,78 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isAuthenticated) return;
     
-    const fetchAll = async () => {
-      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
-      const filterKeys = [
-        'category', 'color', 'content', 'design', 'finish', 'groupcode',
-        'structure', 'subfinish', 'substructure', 'subsuitable', 'suitablefor', 'vendor'
-      ];
-      const filterPromises = filterKeys.map(f => apiFetch(`${base}/${f}`).then(r => r.json()));
-      const productPromise = apiFetch(`${base}/product`).then(r => r.json());
-      const seoPromise = apiFetch(`${base}/seo`).then(r => r.json());
-      const results = await Promise.all([...filterPromises, productPromise, seoPromise]);
-      const newCounts: { [key: string]: number } = {};
-      filterKeys.forEach((f, i) => {
-        newCounts[f] = Array.isArray(results[i].data) ? results[i].data.length : 0;
-      });
-      setCounts(newCounts);
-      setProductCount(Array.isArray(results[filterKeys.length].data) ? results[filterKeys.length].data.length : 0);
-      setSeoCount(Array.isArray(results[filterKeys.length + 1].data) ? results[filterKeys.length + 1].data.length : 0);
+    const fetchData = async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL;
+        const [
+          productsRes,
+          categoriesRes,
+          colorsRes,
+          contentsRes,
+          designsRes,
+          finishesRes,
+          groupcodesRes,
+          structuresRes,
+          subfinishesRes,
+          substructuresRes,
+          subsuitablesRes,
+          suitableforsRes,
+          vendorsRes,
+          seoRes
+        ] = await Promise.all([
+          apiFetch(`${base}/product`),
+          apiFetch(`${base}/category`),
+          apiFetch(`${base}/color`),
+          apiFetch(`${base}/content`),
+          apiFetch(`${base}/design`),
+          apiFetch(`${base}/finish`),
+          apiFetch(`${base}/groupcode`),
+          apiFetch(`${base}/structure`),
+          apiFetch(`${base}/subfinish`),
+          apiFetch(`${base}/substructure`),
+          apiFetch(`${base}/subsuitable`),
+          apiFetch(`${base}/suitablefor`),
+          apiFetch(`${base}/vendor`),
+          apiFetch(`${base}/seo`)
+        ]);
+        const results = await Promise.all([
+          productsRes.json(),
+          categoriesRes.json(),
+          colorsRes.json(),
+          contentsRes.json(),
+          designsRes.json(),
+          finishesRes.json(),
+          groupcodesRes.json(),
+          structuresRes.json(),
+          subfinishesRes.json(),
+          substructuresRes.json(),
+          subsuitablesRes.json(),
+          suitableforsRes.json(),
+          vendorsRes.json(),
+          seoRes.json()
+        ]);
+        const newCounts: { [key: string]: number } = {};
+        newCounts['product'] = Array.isArray(results[0].data) ? results[0].data.length : 0;
+        newCounts['category'] = Array.isArray(results[1].data) ? results[1].data.length : 0;
+        newCounts['color'] = Array.isArray(results[2].data) ? results[2].data.length : 0;
+        newCounts['content'] = Array.isArray(results[3].data) ? results[3].data.length : 0;
+        newCounts['design'] = Array.isArray(results[4].data) ? results[4].data.length : 0;
+        newCounts['finish'] = Array.isArray(results[5].data) ? results[5].data.length : 0;
+        newCounts['groupcode'] = Array.isArray(results[6].data) ? results[6].data.length : 0;
+        newCounts['structure'] = Array.isArray(results[7].data) ? results[7].data.length : 0;
+        newCounts['subfinish'] = Array.isArray(results[8].data) ? results[8].data.length : 0;
+        newCounts['substructure'] = Array.isArray(results[9].data) ? results[9].data.length : 0;
+        newCounts['subsuitable'] = Array.isArray(results[10].data) ? results[10].data.length : 0;
+        newCounts['suitablefor'] = Array.isArray(results[11].data) ? results[11].data.length : 0;
+        newCounts['vendor'] = Array.isArray(results[12].data) ? results[12].data.length : 0;
+        setCounts(newCounts);
+        setProductCount(Array.isArray(results[0].data) ? results[0].data.length : 0);
+        setSeoCount(Array.isArray(results[13].data) ? results[13].data.length : 0);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     };
-    fetchAll();
+    fetchData();
   }, [isAuthenticated]);
 
   if (isAuthenticated === null) {
