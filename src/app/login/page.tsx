@@ -59,7 +59,9 @@ export default function LoginPage() {
     
     try {
       const role = await fetchRoleByEmail(email.trim());
-      if (!role) {
+      const isSuperAdmin = email.trim().toLowerCase() === process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL?.toLowerCase();
+
+      if (!role && !isSuperAdmin) {
         setError("This email is not authorized. Please contact your administrator.");
         setLoading(false);
         return;
@@ -111,9 +113,7 @@ export default function LoginPage() {
         const role = await fetchRoleByEmail(email.trim());
         if (role) {
           localStorage.setItem('admin-permissions', JSON.stringify({
-            filter: role.filter || 'no access',
-            product: role.product || 'no access',
-            seo: role.seo || 'no access',
+            ...role, // Store all permissions from the role
             name: role.name,
             email: role.email,
           }));
@@ -125,6 +125,19 @@ export default function LoginPage() {
               filter: 'all access',
               product: 'all access',
               seo: 'all access',
+              category: 'all access',
+              color: 'all access',
+              content: 'all access',
+              design: 'all access',
+              finish: 'all access',
+              groupcode: 'all access',
+              motif: 'all access',
+              structure: 'all access',
+              subfinish: 'all access',
+              substructure: 'all access',
+              subsuitable: 'all access',
+              suitablefor: 'all access',
+              vendor: 'all access',
               name: 'Super Admin',
               email: superAdminEmail,
             }));

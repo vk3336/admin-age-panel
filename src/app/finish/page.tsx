@@ -74,20 +74,25 @@ const FinishForm = React.memo(({
 FinishForm.displayName = 'FinishForm';
 
 function getFinishPagePermission() {
-  if (typeof window === 'undefined') return 'denied';
+  if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  if (!email) return 'no access';
+
+  if (email === process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL) {
+    return 'all access';
+  }
+
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
   let adminPerm = email ? perms[email] : undefined;
   if (typeof adminPerm === 'string') {
     try { adminPerm = JSON.parse(adminPerm); } catch {}
   }
-  return adminPerm?.filterPermission || 'denied';
+  return adminPerm?.finish || 'no access';
 }
 
 export default function FinishPage() {
   // All hooks at the top
-  const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
+  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
   const [finishes, setFinishes] = useState<Finish[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -105,19 +110,18 @@ export default function FinishPage() {
       const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/finish`);
       const data = await res.json();
       setFinishes(data.data || []);
-    } catch {}
+    } catch (error) {
+        console.error('Failed to fetch finishes:', error);
+    }
   }, []);
 
   useEffect(() => {
-    fetchFinishes();
-    setPageAccess(getFinishPagePermission());
-  }, [fetchFinishes]);
-
-  useEffect(() => {
-    // Check permission from localStorage
     const permission = getFinishPagePermission();
     setPageAccess(permission);
-  }, []);
+    if (permission !== 'no access') {
+      fetchFinishes();
+    }
+  }, [fetchFinishes]);
 
   const handleOpen = useCallback((finish: Finish | null = null) => {
     setEditId(finish?._id || null);
@@ -184,7 +188,7 @@ export default function FinishPage() {
   const paginatedFinishes = filteredFinishes.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   // Permission check rendering
-  if (pageAccess === 'denied') {
+  if (pageAccess === 'no access') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" sx={{ color: '#e74c3c', mb: 2 }}>
@@ -199,7 +203,7 @@ export default function FinishPage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'view' && (
+      {pageAccess === 'only view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>
@@ -253,7 +257,7 @@ export default function FinishPage() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
-          disabled={pageAccess === 'view'}
+          disabled={pageAccess === 'only view'}
           sx={{
             fontWeight: 500,
             borderRadius: '6px',
@@ -353,7 +357,7 @@ export default function FinishPage() {
                     finish={finish}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
-                    viewOnly={pageAccess === 'view'}
+                    viewOnly={pageAccess === 'only view'}
                   />
                 ))}
                 {paginatedFinishes.length === 0 && (
@@ -396,7 +400,7 @@ export default function FinishPage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
-        viewOnly={pageAccess === 'view'}
+        viewOnly={pageAccess === 'only view'}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -431,7 +435,7 @@ export default function FinishPage() {
               borderRadius: '6px',
               color: 'text.secondary',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Cancel
           </Button>
@@ -443,7 +447,7 @@ export default function FinishPage() {
               fontWeight: 500, 
               borderRadius: '6px',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Delete
           </Button>

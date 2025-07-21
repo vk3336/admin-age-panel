@@ -7,7 +7,6 @@ import BrushIcon from '@mui/icons-material/Brush';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import HomeIcon from '@mui/icons-material/Home';
-import { cachedFetch } from '../../utils/performance';
 import { apiFetch } from '../../utils/apiFetch';
 
 interface Motif {
@@ -73,26 +72,26 @@ const MotifForm = React.memo(({
 
 MotifForm.displayName = 'MotifForm';
 
-function getCurrentAdminEmail() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin-email');
-}
-
 function getMotifPagePermission() {
-  if (typeof window === 'undefined') return 'denied';
+  if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'denied';
+  if (!email) return 'no access';
+
+  if (email === process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL) {
+    return 'all access';
+  }
+
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
   let adminPerm = email ? perms[email] : undefined;
   if (typeof adminPerm === 'string') {
     try { adminPerm = JSON.parse(adminPerm); } catch {}
   }
-  return adminPerm?.filterPermission || 'denied';
+  return adminPerm?.motif || 'no access';
 }
 
 export default function MotifPage() {
   // All hooks at the top
-  const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
+  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
   const [motifs, setMotifs] = useState<Motif[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -106,35 +105,20 @@ export default function MotifPage() {
 
   const fetchMotifs = useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/motif`);
-      setMotifs(data.data || []);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    const checkPermission = async () => {
-      const email = getCurrentAdminEmail();
-      if (!email) {
-        return;
-      }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/allowed-admins-permissions`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/motif`);
       const data = await res.json();
-      if (data.success) {
-      } else {
-      }
-    };
-    checkPermission();
+      setMotifs(data.data || []);
+    } catch (error) {
+        console.error('Failed to fetch motifs:', error)
+    }
   }, []);
 
   useEffect(() => {
-    // Check permission from localStorage
     const permission = getMotifPagePermission();
     setPageAccess(permission);
-  }, []);
-
-  useEffect(() => {
-    fetchMotifs();
-    setPageAccess(getMotifPagePermission());
+    if (permission !== 'no access') {
+      fetchMotifs();
+    }
   }, [fetchMotifs]);
 
   const handleOpen = useCallback((motif: Motif | null = null) => {
@@ -202,7 +186,7 @@ export default function MotifPage() {
   const paginatedMotifs = filteredMotifs.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   // Permission check rendering
-  if (pageAccess === 'denied') {
+  if (pageAccess === 'no access') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" sx={{ color: '#e74c3c', mb: 2 }}>
@@ -217,7 +201,7 @@ export default function MotifPage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'view' && (
+      {pageAccess === 'only view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>
@@ -271,7 +255,7 @@ export default function MotifPage() {
           variant="contained"
           startIcon={<BrushIcon />}
           onClick={() => handleOpen()}
-          disabled={pageAccess === 'view'}
+          disabled={pageAccess === 'only view'}
           sx={{
             fontWeight: 500,
             borderRadius: '6px',
@@ -371,7 +355,7 @@ export default function MotifPage() {
                     motif={motif}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
-                    viewOnly={pageAccess === 'view'}
+                    viewOnly={pageAccess === 'only view'}
                   />
                 ))}
                 {paginatedMotifs.length === 0 && (
@@ -409,7 +393,7 @@ export default function MotifPage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
-        viewOnly={pageAccess === 'view'}
+        viewOnly={pageAccess === 'only view'}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -444,7 +428,7 @@ export default function MotifPage() {
               borderRadius: '6px',
               color: 'text.secondary',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Cancel
           </Button>
@@ -456,7 +440,7 @@ export default function MotifPage() {
               fontWeight: 500, 
               borderRadius: '6px',
             }}
-            disabled={pageAccess === 'view'}
+            disabled={pageAccess === 'only view'}
           >
             Delete
           </Button>
