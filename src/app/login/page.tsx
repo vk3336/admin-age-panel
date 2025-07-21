@@ -97,7 +97,6 @@ export default function LoginPage() {
     setError("");
     
     try {
-      const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
       const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/verifyotp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
