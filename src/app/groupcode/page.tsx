@@ -98,11 +98,11 @@ interface GroupcodeFormProps {
   viewOnly: boolean;
   submitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
-  initialData?: Groupcode;
+  form: Groupcode;
+  setForm: React.Dispatch<React.SetStateAction<Groupcode>>;
 }
 
-const GroupcodeForm = React.memo(({ open, onClose, editId, initialData, submitting, onSubmit, viewOnly }: GroupcodeFormProps) => {
-  const [form, setForm] = useState<Groupcode>(initialData || { name: "" });
+const GroupcodeForm = React.memo(({ open, onClose, editId, submitting, onSubmit, viewOnly, form, setForm }: GroupcodeFormProps) => {
   const [imgPreview, setImgPreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [imgDims, setImgDims] = useState<[number, number] | undefined>(undefined);
@@ -112,14 +112,16 @@ const GroupcodeForm = React.memo(({ open, onClose, editId, initialData, submitti
 
   useEffect(() => {
     if (typeof form.img === 'string') setImgPreview(form.img);
-    // don&apost touch imgPreview if form.img is a File
+    else if (form.img && ((form.img as unknown) instanceof File)) setImgPreview(URL.createObjectURL(form.img as File));
+    else setImgPreview(null);
     if (typeof form.video === 'string') setVideoPreview(form.video);
-    // don&apost touch videoPreview if form.video is a File
+    else if (form.video && ((form.video as unknown) instanceof File)) setVideoPreview(URL.createObjectURL(form.video as File));
+    else setVideoPreview(null);
   }, [form.img, form.video, open]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }, [form, setForm]);
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  }, [setForm]);
 
   return (
     <Dialog 
@@ -180,10 +182,7 @@ const GroupcodeForm = React.memo(({ open, onClose, editId, initialData, submitti
                 style={{ display: 'none' }}
                 onChange={e => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    setForm((prev: Groupcode) => ({ ...prev, img: file }));
-                    setImgPreview(URL.createObjectURL(file));
-                  }
+                  setForm(prev => ({ ...prev, img: file }));
                 }}
               />
               <Button
@@ -237,10 +236,7 @@ const GroupcodeForm = React.memo(({ open, onClose, editId, initialData, submitti
                 style={{ display: 'none' }}
                 onChange={e => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    setForm((prev: Groupcode) => ({ ...prev, video: file }));
-                    setVideoPreview(URL.createObjectURL(file));
-                  }
+                  setForm(prev => ({ ...prev, video: file }));
                 }}
               />
               <Button
@@ -359,7 +355,7 @@ export default function GroupcodePage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function isFile(val: unknown): val is File {
-    return typeof val === 'object' && val !== null && (val as File).name !== undefined;
+    return typeof File !== "undefined" && val instanceof File;
   }
 
   const fetchGroupcodes = useCallback(async () => {
@@ -699,7 +695,8 @@ export default function GroupcodePage() {
         submitting={submitting}
         editId={editId}
         viewOnly={pageAccess === 'view'}
-        initialData={form}
+        form={form}
+        setForm={setForm}
       />
 
       {/* Delete Confirmation Dialog */}

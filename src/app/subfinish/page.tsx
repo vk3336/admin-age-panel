@@ -260,7 +260,7 @@ export default function SubfinishPage() {
       const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/subfinish`);
       const data = await res.json();
       setSubfinishes(data.data || []);
-    } catch (error) {
+    } catch {
       setSubfinishes([]);
       // Optionally, add error handling UI here
     }

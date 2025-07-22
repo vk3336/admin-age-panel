@@ -6,10 +6,12 @@ const SUPER_ADMIN_EMAIL = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
 
 export const apiFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input.toString();
-    const headers = new Headers(init?.headers);
+    let headers: Headers | undefined = undefined;
+// removed redundant declaration; see below for const assignment
 
+    const isFormData = init?.body instanceof FormData;
+    headers = new Headers(init?.headers);
     const isRoleApi = url.includes('/api/roles');
-
     if (isRoleApi) {
         if (SUPER_ADMIN_HEADER_NAME && SUPER_ADMIN_EMAIL) {
             headers.append(SUPER_ADMIN_HEADER_NAME, SUPER_ADMIN_EMAIL);
@@ -20,7 +22,12 @@ export const apiFetch = async (input: RequestInfo | URL, init?: RequestInit): Pr
         }
     }
 
-    const updatedOptions: RequestInit = {
+    // If FormData, remove Content-Type so browser sets it, but keep auth headers
+    if (isFormData && headers.has('Content-Type')) {
+        headers.delete('Content-Type');
+    }
+
+    const updatedOptions = {
         ...init,
         headers,
     };
