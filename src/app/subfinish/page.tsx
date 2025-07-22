@@ -10,7 +10,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { cachedFetch } from '../../utils/performance';
+import { apiFetch } from '../../utils/apiFetch';
 
 interface Subfinish {
   _id?: string;
@@ -257,9 +257,12 @@ export default function SubfinishPage() {
 
   const fetchSubfinishes = useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/subfinish`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/subfinish`);
+      const data = await res.json();
       setSubfinishes(data.data || []);
-    } finally {
+    } catch (error) {
+      setSubfinishes([]);
+      // Optionally, add error handling UI here
     }
   }, []);
 
@@ -303,7 +306,7 @@ export default function SubfinishPage() {
         ...form,
         finish: typeof form.finish === 'object' ? form.finish._id : form.finish,
       };
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -318,20 +321,15 @@ export default function SubfinishPage() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subfinish/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/subfinish/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data && data.message && data.message.includes("in use")) {
-          // setDeleteError("Cannot delete: Subfinish is in use by one or more products."); // This line was removed
-        } else {
-          // setDeleteError(data.message || "Failed to delete subfinish."); // This line was removed
-        }
+        // Optionally, handle error UI here
         return;
       }
       setDeleteId(null);
       fetchSubfinishes();
     } catch {
-      // setDeleteError("An error occurred while deleting the subfinish."); // This line was removed
+      // Optionally, handle error UI here
     }
   }, [deleteId, fetchSubfinishes]);
 

@@ -7,7 +7,7 @@ import BrushIcon from '@mui/icons-material/Brush';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import HomeIcon from '@mui/icons-material/Home';
-import { cachedFetch } from '../../utils/performance';
+import { apiFetch } from '../../utils/apiFetch';
 
 interface Design {
   _id?: string;
@@ -106,7 +106,8 @@ export default function DesignPage() {
 
   const fetchDesigns = React.useCallback(async () => {
     try {
-      const data = await cachedFetch(`${process.env.NEXT_PUBLIC_API_URL}/design`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/design`);
+      const data = await res.json();
       setDesigns(data.data || []);
     } catch {}
   }, []);
@@ -118,7 +119,7 @@ export default function DesignPage() {
         // setAllowed(false);
         return;
       }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/allowed-admins-permissions`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/allowed-admins-permissions`);
       const data = await res.json();
       if (data.success) {
         // const admin = data.data.find((a: { email: string }) => a.email === email);
@@ -159,7 +160,7 @@ export default function DesignPage() {
     try {
       const method = editId ? "PUT" : "POST";
       const url = `${process.env.NEXT_PUBLIC_API_URL}/design${editId ? "/" + editId : ""}`;
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -175,7 +176,7 @@ export default function DesignPage() {
     if (!deleteId) return;
     setDeleteError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/design/${deleteId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/design/${deleteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data && data.message && data.message.includes("in use")) {

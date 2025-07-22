@@ -74,25 +74,22 @@ const FinishForm = React.memo(({
 FinishForm.displayName = 'FinishForm';
 
 function getFinishPagePermission() {
-  if (typeof window === 'undefined') return 'no access';
+  if (typeof window === 'undefined') return 'denied';
   const email = localStorage.getItem('admin-email');
-  if (!email) return 'no access';
-
-  if (email === process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL) {
-    return 'all access';
-  }
-
+  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN;
+  if (email && superAdmin && email === superAdmin) return 'full';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
-  let adminPerm = email ? perms[email] : undefined;
-  if (typeof adminPerm === 'string') {
-    try { adminPerm = JSON.parse(adminPerm); } catch {}
+  if (perms && perms.filter) {
+    if (perms.filter === 'all access') return 'full';
+    if (perms.filter === 'only view') return 'view';
+    if (perms.filter === 'no access') return 'denied';
   }
-  return adminPerm?.finish || 'no access';
+  return 'denied';
 }
 
 export default function FinishPage() {
   // All hooks at the top
-  const [pageAccess, setPageAccess] = useState<'all access' | 'only view' | 'no access'>('no access');
+  const [pageAccess, setPageAccess] = useState<'full' | 'view' | 'denied'>('denied');
   const [finishes, setFinishes] = useState<Finish[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -118,7 +115,7 @@ export default function FinishPage() {
   useEffect(() => {
     const permission = getFinishPagePermission();
     setPageAccess(permission);
-    if (permission !== 'no access') {
+    if (permission !== 'denied') {
       fetchFinishes();
     }
   }, [fetchFinishes]);
@@ -188,7 +185,7 @@ export default function FinishPage() {
   const paginatedFinishes = filteredFinishes.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   // Permission check rendering
-  if (pageAccess === 'no access') {
+  if (pageAccess === 'denied') {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h5" sx={{ color: '#e74c3c', mb: 2 }}>
@@ -203,7 +200,7 @@ export default function FinishPage() {
 
   return (
     <Box sx={{ p: 0 }}>
-      {pageAccess === 'only view' && (
+      {pageAccess === 'view' && (
         <Box sx={{ mb: 2 }}>
           <Paper elevation={2} sx={{ p: 2, bgcolor: '#fffbe6', border: '1px solid #ffe58f' }}>
             <Typography color="#ad6800" fontWeight={600}>
@@ -257,7 +254,7 @@ export default function FinishPage() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpen()}
-          disabled={pageAccess === 'only view'}
+          disabled={pageAccess === 'view'}
           sx={{
             fontWeight: 500,
             borderRadius: '6px',
@@ -357,7 +354,7 @@ export default function FinishPage() {
                     finish={finish}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
-                    viewOnly={pageAccess === 'only view'}
+                    viewOnly={pageAccess === 'view'}
                   />
                 ))}
                 {paginatedFinishes.length === 0 && (
@@ -400,7 +397,7 @@ export default function FinishPage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         editId={editId}
-        viewOnly={pageAccess === 'only view'}
+        viewOnly={pageAccess === 'view'}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -435,7 +432,7 @@ export default function FinishPage() {
               borderRadius: '6px',
               color: 'text.secondary',
             }}
-            disabled={pageAccess === 'only view'}
+            disabled={pageAccess === 'view'}
           >
             Cancel
           </Button>
@@ -447,7 +444,7 @@ export default function FinishPage() {
               fontWeight: 500, 
               borderRadius: '6px',
             }}
-            disabled={pageAccess === 'only view'}
+            disabled={pageAccess === 'view'}
           >
             Delete
           </Button>

@@ -31,6 +31,7 @@ const ColorRow = React.memo(({ color, onEdit, onDelete, viewOnly }: {
 
 ColorRow.displayName = 'ColorRow';
 
+
 const ColorForm = React.memo(({ 
   open, 
   onClose, 
@@ -39,7 +40,8 @@ const ColorForm = React.memo(({
   onSubmit, 
   submitting, 
   editId, 
-  viewOnly
+  viewOnly, 
+  error 
 }: {
   open: boolean;
   onClose: () => void;
@@ -49,6 +51,7 @@ const ColorForm = React.memo(({
   submitting: boolean;
   editId: string | null;
   viewOnly: boolean;
+  error?: string | null;
 }) => {
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -60,6 +63,9 @@ const ColorForm = React.memo(({
       <form onSubmit={onSubmit}>
         <DialogContent sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 3 }}>
           <TextField label="Name" name="name" value={form.name} onChange={handleChange} required fullWidth sx={{ fontSize: 18 }} disabled={submitting || viewOnly} InputProps={{ readOnly: viewOnly }} />
+          {error && (
+            <Typography sx={{ color: 'error.main', mt: 1 }}>{error}</Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} sx={{ fontWeight: 700, borderRadius: 3, fontSize: 16 }} disabled={submitting || viewOnly}>Cancel</Button>
@@ -96,6 +102,7 @@ export default function ColorPage() {
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const fetchColors = useCallback(async () => {
     try {
@@ -112,6 +119,7 @@ export default function ColorPage() {
   const handleOpen = useCallback((color: Color | null = null) => {
     setEditId(color?._id || null);
     setForm(color ? { ...color } : { name: "" });
+    setFormError(null);
     setOpen(true);
   }, []);
 
@@ -123,19 +131,28 @@ export default function ColorPage() {
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    // setSubmitting(true); // This line was removed as per the edit hint
+    setFormError(null);
     try {
       const method = editId ? "PUT" : "POST";
       const url = `${process.env.NEXT_PUBLIC_API_URL}/color${editId ? "/" + editId : ""}`;
-      await apiFetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data && data.message && data.message.includes("unique")) {
+          setFormError(data.message);
+          return;
+        }
+        setFormError(data.message || "Failed to save color.");
+        return;
+      }
       fetchColors();
       handleClose();
-    } finally {
-      // setSubmitting(false); // This line was removed as per the edit hint
+    } catch {
+      setFormError("Failed to save color.");
     }
   }, [form, editId, fetchColors, handleClose]);
 
@@ -362,9 +379,10 @@ export default function ColorPage() {
         form={form}
         setForm={setForm}
         onSubmit={handleSubmit}
-        submitting={false} // This was removed as per the edit hint
+        submitting={false}
         editId={editId}
         viewOnly={pageAccess === 'only view'}
+        error={formError}
       />
 
       {/* Delete Confirmation Dialog */}
