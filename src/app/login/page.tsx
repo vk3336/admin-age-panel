@@ -59,7 +59,7 @@ export default function LoginPage() {
     
     try {
       const role = await fetchRoleByEmail(email.trim());
-      const isSuperAdmin = email.trim().toLowerCase() === process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL?.toLowerCase();
+      const isSuperAdmin = email.trim().toLowerCase() === process.env.NEXT_PUBLIC_Role_Management_Key_Value?.toLowerCase();
 
       if (!role && !isSuperAdmin) {
         setError("This email is not authorized. Please contact your administrator.");
@@ -119,7 +119,7 @@ export default function LoginPage() {
           }));
         } else {
           // Fallback for super admin if not in roles DB
-          const superAdminEmail = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+          const superAdminEmail = process.env.NEXT_PUBLIC_Role_Management_Key_Value;
           if (email.trim().toLowerCase() === superAdminEmail?.toLowerCase()) {
             localStorage.setItem('admin-permissions', JSON.stringify({
               filter: 'all access',

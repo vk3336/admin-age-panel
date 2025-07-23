@@ -238,7 +238,7 @@ SubstructureForm.displayName = 'SubstructureForm';
 function getSubstructurePagePermission() {
   if (typeof window === 'undefined') return 'no access';
   const email = localStorage.getItem('admin-email');
-  const superAdmin = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+  const superAdmin = process.env.NEXT_PUBLIC_Role_Management_Key_Value;
   if (email && superAdmin && email === superAdmin) return 'all access';
   const perms = JSON.parse(localStorage.getItem('admin-permissions') || '{}');
   if (perms && perms.filter) {

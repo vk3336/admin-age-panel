@@ -1,8 +1,8 @@
 // Read env variables at the top level
 const API_KEY_NAME = process.env.NEXT_PUBLIC_API_KEY_NAME;
 const API_KEY_VALUE = process.env.NEXT_PUBLIC_API_SECRET_KEY;
-const SUPER_ADMIN_HEADER_NAME = process.env.NEXT_PUBLIC_SUPER_ADMIN_HEADER_NAME;
-const SUPER_ADMIN_EMAIL = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+const SUPER_ADMIN_HEADER_NAME = process.env.NEXT_PUBLIC_Role_Management_Key;
+const SUPER_ADMIN_EMAIL = process.env.NEXT_PUBLIC_Role_Management_Key_Value;
 
 export const apiFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input.toString();
