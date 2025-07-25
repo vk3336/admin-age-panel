@@ -272,15 +272,17 @@ export default function SubfinishPage() {
   }, [fetchSubfinishes]);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/finish`)
-      .then(res => res.json())
-      .then(data => setFinishes(data.data || []));
-  }, []);
-
-  useEffect(() => {
-    // Check permission from localStorage
-    const permission = getSubfinishPagePermission();
-    setPageAccess(permission);
+    const fetchFinishes = async () => {
+      try {
+        const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/finish`);
+        const data = await res.json();
+        setFinishes(data.data || []);
+      } catch (error) {
+        console.error('Error fetching finishes:', error);
+        setFinishes([]);
+      }
+    };
+    fetchFinishes();
   }, []);
 
   const handleOpen = useCallback((subfinish: Subfinish | null = null) => {

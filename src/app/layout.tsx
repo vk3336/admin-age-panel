@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useCallback, useState, useEffect } from "react";
+import React, { useMemo, useCallback, useState, useEffect, createContext, useContext } from "react";
 import NextLink from "next/link";
 import { 
   Box, 
@@ -35,8 +35,44 @@ import PersonIcon from '@mui/icons-material/Person';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import InventoryIcon from '@mui/icons-material/Inventory';
 
+// Sidebar context for managing collapse state
+interface SidebarContextType {
+  isCollapsed: boolean;
+  toggleSidebar: () => void;
+}
+
+const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
+
+const useSidebar = () => {
+  const context = useContext(SidebarContext);
+  if (!context) {
+    throw new Error('useSidebar must be used within a SidebarProvider');
+  }
+  return context;
+};
+
+const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  const toggleSidebar = useCallback(() => {
+    setIsCollapsed(prev => !prev);
+  }, []);
+  
+  const value = useMemo(() => ({
+    isCollapsed,
+    toggleSidebar,
+  }), [isCollapsed, toggleSidebar]);
+  
+  return (
+    <SidebarContext.Provider value={value}>
+      {children}
+    </SidebarContext.Provider>
+  );
+};
+
 // DattaAble styled components
 const drawerWidth = 260;
+const collapsedDrawerWidth = 60;
 
 const filterModels = [
   { name: "Category", path: "/category" },
@@ -128,6 +164,8 @@ const Sidebar = React.memo(() => {
   const [open, setOpen] = React.useState(true);
   const pathname = usePathname();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const { isCollapsed } = useSidebar();
+  
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const email = localStorage.getItem('admin-email');
@@ -147,25 +185,36 @@ const Sidebar = React.memo(() => {
       variant="permanent"
       anchor="left"
       sx={{
-        width: drawerWidth,
+        width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
         flexShrink: 0,
+        transition: 'width 0.3s ease',
         '& .MuiDrawer-paper': {
-          width: drawerWidth,
+          width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
           boxSizing: 'border-box',
           backgroundColor: 'background.paper',
           borderRight: '1px solid',
           borderColor: 'divider',
+          transition: 'width 0.3s ease',
+          overflowX: 'hidden',
         }
       }}
     >
       {/* Logo Section */}
       <Box sx={{ 
-        p: 3, 
+        p: isCollapsed ? 1 : 3, 
         borderBottom: '1px solid',
         borderColor: 'divider',
-        backgroundColor: 'background.paper'
+        backgroundColor: 'background.paper',
+        display: 'flex',
+        justifyContent: isCollapsed ? 'center' : 'flex-start',
+        alignItems: 'center',
+        minHeight: 72
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {isCollapsed ? (
+          <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36 }}>
+            <DashboardIcon sx={{ fontSize: 20 }} />
+          </Avatar>
+        ) : (
           <Box>
             <Typography variant="h6" sx={{ 
               color: 'text.primary', 
@@ -181,12 +230,12 @@ const Sidebar = React.memo(() => {
               Dashboard
             </Typography>
           </Box>
-        </Box>
+        )}
       </Box>
 
       {/* Navigation Menu */}
       <Box sx={{ overflow: 'auto', py: 2 }}>
-        <List sx={{ px: 2 }}>
+        <List sx={{ px: isCollapsed ? 0.5 : 2 }}>
           {/* Dashboard */}
           <ListItemButton 
             component={NextLink} 
@@ -195,8 +244,10 @@ const Sidebar = React.memo(() => {
               borderRadius: '6px',
               mb: 1,
               py: 1.5,
-              px: 2,
+              px: isCollapsed ? 0 : 2,
               transition: 'all 0.3s ease',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              minHeight: 48,
               ...(pathname === '/dashboard' && {
                 backgroundColor: 'primary.main',
                 color: 'white',
@@ -212,19 +263,23 @@ const Sidebar = React.memo(() => {
             <ListItemIcon sx={{ 
               color: pathname === '/dashboard' ? 'white' : 'text.secondary', 
               minWidth: 0, 
-              mr: 2 
+              mr: isCollapsed ? 0 : 2,
+              justifyContent: 'center',
+              display: 'flex'
             }}>
               <DashboardIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText 
-              primary="Dashboard" 
-              sx={{ 
-                '& .MuiTypography-root': { 
-                  fontSize: '14px',
-                  fontWeight: 500
-                } 
-              }} 
-            />
+            {!isCollapsed && (
+              <ListItemText 
+                primary="Dashboard" 
+                sx={{ 
+                  '& .MuiTypography-root': { 
+                    fontSize: '14px',
+                    fontWeight: 500
+                  } 
+                }} 
+              />
+            )}
           </ListItemButton>
           
           {/* Products */}
@@ -235,8 +290,10 @@ const Sidebar = React.memo(() => {
               borderRadius: '6px',
               mb: 1,
               py: 1.5,
-              px: 2,
+              px: isCollapsed ? 0 : 2,
               transition: 'all 0.3s ease',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              minHeight: 48,
               ...(pathname === '/products' && {
                 backgroundColor: 'primary.main',
                 color: 'white',
@@ -252,19 +309,23 @@ const Sidebar = React.memo(() => {
             <ListItemIcon sx={{ 
               color: pathname === '/products' ? 'white' : 'text.secondary', 
               minWidth: 0, 
-              mr: 2 
+              mr: isCollapsed ? 0 : 2,
+              justifyContent: 'center',
+              display: 'flex'
             }}>
               <InventoryIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText 
-              primary="Products" 
-              sx={{ 
-                '& .MuiTypography-root': { 
-                  fontSize: '14px',
-                  fontWeight: 500
-                } 
-              }} 
-            />
+            {!isCollapsed && (
+              <ListItemText 
+                primary="Products" 
+                sx={{ 
+                  '& .MuiTypography-root': { 
+                    fontSize: '14px',
+                    fontWeight: 500
+                  } 
+                }} 
+              />
+            )}
           </ListItemButton>
 
           {/* SEO */}
@@ -275,8 +336,10 @@ const Sidebar = React.memo(() => {
               borderRadius: '6px',
               mb: 1,
               py: 1.5,
-              px: 2,
+              px: isCollapsed ? 0 : 2,
               transition: 'all 0.3s ease',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              minHeight: 48,
               ...(pathname === '/seo' && {
                 backgroundColor: 'primary.main',
                 color: 'white',
@@ -292,19 +355,23 @@ const Sidebar = React.memo(() => {
             <ListItemIcon sx={{ 
               color: pathname === '/seo' ? 'white' : 'text.secondary', 
               minWidth: 0, 
-              mr: 2 
+              mr: isCollapsed ? 0 : 2,
+              justifyContent: 'center',
+              display: 'flex'
             }}>
               <InventoryIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText 
-              primary="SEO" 
-              sx={{ 
-                '& .MuiTypography-root': { 
-                  fontSize: '14px',
-                  fontWeight: 500
-                } 
-              }} 
-            />
+            {!isCollapsed && (
+              <ListItemText 
+                primary="SEO" 
+                sx={{ 
+                  '& .MuiTypography-root': { 
+                    fontSize: '14px',
+                    fontWeight: 500
+                  } 
+                }} 
+              />
+            )}
           </ListItemButton>
 
           {/* Admin Restriction */}
@@ -316,8 +383,10 @@ const Sidebar = React.memo(() => {
                 borderRadius: '6px',
                 mb: 1,
                 py: 1.5,
-                px: 2,
+                px: isCollapsed ? 0 : 2,
                 transition: 'all 0.3s ease',
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
+                minHeight: 48,
                 ...(pathname === '/admin-restriction' && {
                   backgroundColor: 'primary.main',
                   color: 'white',
@@ -333,19 +402,23 @@ const Sidebar = React.memo(() => {
               <ListItemIcon sx={{ 
                 color: pathname === '/admin-restriction' ? 'white' : 'text.secondary', 
                 minWidth: 0, 
-                mr: 2 
+                mr: isCollapsed ? 0 : 2,
+                justifyContent: 'center',
+                display: 'flex'
               }}>
                 <PeopleIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText 
-                primary="Admin Restriction" 
-                sx={{ 
-                  '& .MuiTypography-root': { 
-                    fontSize: '14px',
-                    fontWeight: 500
-                  } 
-                }} 
-              />
+              {!isCollapsed && (
+                <ListItemText 
+                  primary="Admin Restriction" 
+                  sx={{ 
+                    '& .MuiTypography-root': { 
+                      fontSize: '14px',
+                      fontWeight: 500
+                    } 
+                  }} 
+                />
+              )}
             </ListItemButton>
           )}
 
@@ -377,20 +450,22 @@ const Sidebar = React.memo(() => {
             }}>
               <FilterListIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText 
-              primary="Filters" 
-              sx={{ 
-                '& .MuiTypography-root': { 
-                  fontSize: '14px',
-                  fontWeight: 500
-                } 
-              }} 
-            />
-            {open ? <ExpandLess /> : <ExpandMore />}
+            {!isCollapsed && (
+              <ListItemText 
+                primary="Filters" 
+                sx={{ 
+                  '& .MuiTypography-root': { 
+                    fontSize: '14px',
+                    fontWeight: 500
+                  } 
+                }} 
+              />
+            )}
+            {!isCollapsed && (open ? <ExpandLess /> : <ExpandMore />)}
           </ListItemButton>
           
           {/* Filter Submenu */}
-          <Collapse in={open} timeout="auto" unmountOnExit>
+          <Collapse in={open && !isCollapsed} timeout="auto" unmountOnExit>
             <List component="div" disablePadding sx={{ pl: 2 }}>
               {filterModels.map((model) => (
                 <ListItemButton 
@@ -454,15 +529,17 @@ const Sidebar = React.memo(() => {
             }}>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText 
-              primary="Logout" 
-              sx={{ 
-                '& .MuiTypography-root': { 
-                  fontSize: '14px',
-                  fontWeight: 500
-                } 
-              }} 
-            />
+            {!isCollapsed && (
+              <ListItemText 
+                primary="Logout" 
+                sx={{ 
+                  '& .MuiTypography-root': { 
+                    fontSize: '14px',
+                    fontWeight: 500
+                  } 
+                }} 
+              />
+            )}
           </ListItemButton>
         </List>
       </Box>
@@ -476,6 +553,8 @@ const Header = React.memo(() => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notifAnchor, setNotifAnchor] = useState<null | HTMLElement>(null);
   const [userEmail, setUserEmail] = useState('');
+  const { isCollapsed, toggleSidebar } = useSidebar();
+  
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setUserEmail(localStorage.getItem('admin-email') || '');
@@ -501,8 +580,9 @@ const Header = React.memo(() => {
         boxShadow: 'none',
         height: 56,
         minHeight: 56,
-        left: `${drawerWidth}px`, // Header starts after sidebar
-        width: `calc(100% - ${drawerWidth}px)`, // Header does not overlap sidebar
+        left: `${isCollapsed ? collapsedDrawerWidth : drawerWidth}px`, // Header starts after sidebar
+        width: `calc(100% - ${isCollapsed ? collapsedDrawerWidth : drawerWidth}px)`, // Header does not overlap sidebar
+        transition: 'left 0.3s ease, width 0.3s ease',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -528,7 +608,7 @@ const Header = React.memo(() => {
       >
         {/* Left: Hamburger/Menu and Search Icon */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton size="small" sx={{ color: '#6c7890', width: 36, height: 36 }}>
+          <IconButton size="small" onClick={toggleSidebar} sx={{ color: '#6c7890', width: 36, height: 36 }}>
             <MenuOutlinedIcon sx={{ fontSize: 24 }} />
           </IconButton>
           <IconButton size="small" sx={{ color: '#6c7890', width: 36, height: 36 }}>
@@ -653,24 +733,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Box sx={{ display: 'flex' }}>
-            {mounted && <Sidebar />}
-            <Box sx={{ flexGrow: 1 }}>
-              {mounted && <Header />}
-              <Box
-                component="main"
-                sx={{
-                  flexGrow: 1,
-                  p: 3,
-                  mt: 8,
-                  backgroundColor: 'background.default',
-                  minHeight: '100vh',
-                }}
-              >
-                {children}
+          <SidebarProvider>
+            <Box sx={{ display: 'flex' }}>
+              {mounted && <Sidebar />}
+              <Box sx={{ flexGrow: 1 }}>
+                {mounted && <Header />}
+                <Box
+                  component="main"
+                  sx={{
+                    flexGrow: 1,
+                    p: 3,
+                    mt: 8,
+                    backgroundColor: 'background.default',
+                    minHeight: '100vh',
+                  }}
+                >
+                  {children}
+                </Box>
               </Box>
             </Box>
-          </Box>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -155,7 +155,8 @@ const CategoryForm = React.memo(({
   editId, 
   imagePreview, 
   onImageChange, 
-  viewOnly
+  viewOnly,
+  formError
 }: {
   open: boolean;
   onClose: () => void;
@@ -167,6 +168,7 @@ const CategoryForm = React.memo(({
   imagePreview: string | null;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   viewOnly: boolean;
+  formError: string | null;
 }) => {
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -221,6 +223,11 @@ const CategoryForm = React.memo(({
               },
             }}
           />
+          {formError && (
+            <Typography sx={{ color: 'error.main', fontSize: 14 }}>
+              {formError}
+            </Typography>
+          )}
           <Box display="flex" alignItems="center" gap={2}>
             <Button 
               variant="outlined" 
@@ -325,6 +332,7 @@ export default function CategoryPage() {
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -352,6 +360,7 @@ export default function CategoryPage() {
     setEditId(null);
     setImagePreview(null);
     setForm({ name: "" });
+    setFormError(null); // Clear form error when closing
   }, []);
 
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -364,6 +373,14 @@ export default function CategoryPage() {
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null); // Clear any previous errors
+    
+    // Validate image is required when adding new category
+    if (!editId && !isFile(form.image)) {
+      setFormError("Please select an image for the category.");
+      return;
+    }
+    
     setSubmitting(true);
     try {
       const formData = new FormData();
@@ -655,6 +672,7 @@ export default function CategoryPage() {
         imagePreview={imagePreview}
         onImageChange={handleImageChange}
         viewOnly={pageAccess === 'only view'}
+        formError={formError}
       />
 
       {/* Delete Confirmation Dialog */}

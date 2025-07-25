@@ -314,9 +314,9 @@ const AdminRestrictionPage = () => {
                   borderRadius: 2,
                 }}
               >
-                <MenuItem value="all access" sx={{ color: '#4caf50', fontWeight: 600 }}>All Access</MenuItem>
-                <MenuItem value="only view" sx={{ color: '#ff9800', fontWeight: 600 }}>Only View</MenuItem>
-                <MenuItem value="no access" sx={{ color: '#f44336', fontWeight: 600 }}>No Access</MenuItem>
+                <MenuItem key={`${admin._id}-filter-all-access`} value="all access" sx={{ color: '#4caf50', fontWeight: 600 }}>All Access</MenuItem>
+                <MenuItem key={`${admin._id}-filter-only-view`} value="only view" sx={{ color: '#ff9800', fontWeight: 600 }}>Only View</MenuItem>
+                <MenuItem key={`${admin._id}-filter-no-access`} value="no access" sx={{ color: '#f44336', fontWeight: 600 }}>No Access</MenuItem>
               </Select>
             </FormControl>
             {/* Product Permission */}
@@ -336,9 +336,9 @@ const AdminRestrictionPage = () => {
                   borderRadius: 2,
                 }}
               >
-                <MenuItem value="all access" sx={{ color: '#4caf50', fontWeight: 600 }}>All Access</MenuItem>
-                <MenuItem value="only view" sx={{ color: '#ff9800', fontWeight: 600 }}>Only View</MenuItem>
-                <MenuItem value="no access" sx={{ color: '#f44336', fontWeight: 600 }}>No Access</MenuItem>
+                <MenuItem key={`${admin._id}-product-all-access`} value="all access" sx={{ color: '#4caf50', fontWeight: 600 }}>All Access</MenuItem>
+                <MenuItem key={`${admin._id}-product-only-view`} value="only view" sx={{ color: '#ff9800', fontWeight: 600 }}>Only View</MenuItem>
+                <MenuItem key={`${admin._id}-product-no-access`} value="no access" sx={{ color: '#f44336', fontWeight: 600 }}>No Access</MenuItem>
               </Select>
             </FormControl>
             {/* SEO Permission */}
@@ -358,9 +358,9 @@ const AdminRestrictionPage = () => {
                   borderRadius: 2,
                 }}
               >
-                <MenuItem value="all access" sx={{ color: '#4caf50', fontWeight: 600 }}>All Access</MenuItem>
-                <MenuItem value="only view" sx={{ color: '#ff9800', fontWeight: 600 }}>Only View</MenuItem>
-                <MenuItem value="no access" sx={{ color: '#f44336', fontWeight: 600 }}>No Access</MenuItem>
+                <MenuItem key={`${admin._id}-seo-all-access`} value="all access" sx={{ color: '#4caf50', fontWeight: 600 }}>All Access</MenuItem>
+                <MenuItem key={`${admin._id}-seo-only-view`} value="only view" sx={{ color: '#ff9800', fontWeight: 600 }}>Only View</MenuItem>
+                <MenuItem key={`${admin._id}-seo-no-access`} value="no access" sx={{ color: '#f44336', fontWeight: 600 }}>No Access</MenuItem>
               </Select>
             </FormControl>
             {/* Delete Button */}
