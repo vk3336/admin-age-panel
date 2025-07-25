@@ -156,6 +156,7 @@ export default function ProductPage() {
     { key: "vendor", label: "Vendor" },
     { key: "groupcode", label: "Groupcode" },
     { key: "color", label: "Color" },
+    { key: "motif", label: "Motif" },
     // ...add any other dropdown fields you use
   ], []);
   // Add state for image dimensions
@@ -209,6 +210,28 @@ export default function ProductPage() {
   useEffect(() => {
     setPageAccess(getProductPagePermission());
   }, []);
+
+  useEffect(() => {
+    if (form.gsm && !isNaN(Number(form.gsm))) {
+      const gsmValue = Number(form.gsm);
+      // GSM to OZ conversion: 1 GSM = 0.0295735 OZ
+      const ozValue = (gsmValue * 0.0295735).toFixed(4);
+      setForm(prev => ({ ...prev, oz: ozValue }));
+    } else if (!form.gsm) {
+      setForm(prev => ({ ...prev, oz: "" }));
+    }
+  }, [form.gsm]);
+
+  useEffect(() => {
+    if (form.cm && !isNaN(Number(form.cm))) {
+      const cmValue = Number(form.cm);
+      // CM to INCH conversion: 1 CM = 0.393701 INCH
+      const inchValue = (cmValue * 0.393701).toFixed(4);
+      setForm(prev => ({ ...prev, inch: inchValue }));
+    } else if (!form.cm) {
+      setForm(prev => ({ ...prev, inch: "" }));
+    }
+  }, [form.cm]);
 
   const getId = useCallback((field: unknown): string => {
     if (field && typeof field === 'object' && '_id' in field && typeof (field as { _id?: unknown })._id === 'string') {
@@ -759,8 +782,8 @@ export default function ProductPage() {
                   }}
                   disabled={pageAccess === 'only view'}
                 >
-                  {dropdowns[field.key]?.map((option: Option) => (
-                    <MenuItem key={option._id} value={option._id}>
+                  {dropdowns[field.key]?.map((option: Option, index: number) => (
+                    <MenuItem key={`${field.key}-${option._id}-${index}`} value={option._id}>
                       {option.name}
                     </MenuItem>
                   ))}

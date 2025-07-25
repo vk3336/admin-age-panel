@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link, Chip, InputAdornment, MenuItem
+  Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Pagination, Breadcrumbs, Link, Chip, InputAdornment, MenuItem, FormControlLabel, Checkbox, FormGroup, FormLabel
 } from '@mui/material';
 import CategoryIcon from '@mui/icons-material/Category';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -20,7 +20,7 @@ interface Suitablefor {
 interface Subsuitable {
   _id?: string;
   name: string;
-  suitablefor: string | Suitablefor;
+  suitablefor: string[] | Suitablefor[];
 }
 
 const SubsuitableRow = React.memo(({ subsuitable, onEdit, onDelete, viewOnly }: {
@@ -46,9 +46,18 @@ const SubsuitableRow = React.memo(({ subsuitable, onEdit, onDelete, viewOnly }: 
       {subsuitable.name}
     </TableCell>
     <TableCell>
-      {typeof subsuitable.suitablefor === 'object'
-        ? subsuitable.suitablefor.name
-        : subsuitable.suitablefor || 'N/A'}
+      {Array.isArray(subsuitable.suitablefor)
+        ? subsuitable.suitablefor.map((sf, index) => (
+            <Chip 
+              key={index} 
+              label={typeof sf === 'object' && sf !== null && 'name' in sf ? sf.name : String(sf)} 
+              size="small" 
+              sx={{ mr: 0.5, mb: 0.5 }}
+            />
+          ))
+        : typeof subsuitable.suitablefor === 'object' && subsuitable.suitablefor !== null && 'name' in subsuitable.suitablefor
+        ? (subsuitable.suitablefor as Suitablefor).name
+        : String(subsuitable.suitablefor) || 'N/A'}
     </TableCell>
     <TableCell>
       <Box sx={{ display: 'flex', gap: 1 }}>
@@ -114,6 +123,28 @@ const SubsuitableForm = React.memo(({
     }
   }, [form, setForm]);
 
+  const handleCheckboxChange = useCallback((suitableforId: string, checked: boolean) => {
+    const currentIds = Array.isArray(form.suitablefor) 
+      ? form.suitablefor.map(sf => typeof sf === 'string' ? sf : sf._id)
+      : [];
+    
+    let newIds: string[];
+    if (checked) {
+      newIds = [...currentIds, suitableforId];
+    } else {
+      newIds = currentIds.filter(id => id !== suitableforId);
+    }
+    
+    setForm({ ...form, suitablefor: newIds });
+  }, [form, setForm]);
+
+  const isChecked = useCallback((suitableforId: string) => {
+    if (!Array.isArray(form.suitablefor)) return false;
+    return form.suitablefor.some(sf => 
+      typeof sf === 'string' ? sf === suitableforId : sf._id === suitableforId
+    );
+  }, [form.suitablefor]);
+
   return (
     <Dialog 
       open={open} 
@@ -163,38 +194,24 @@ const SubsuitableForm = React.memo(({
               },
             }}
           />
-          <TextField
-            select
-            label="Suitable For"
-            name="suitablefor"
-            value={typeof form.suitablefor === 'string' ? form.suitablefor : form.suitablefor?._id || ''}
-            onChange={handleChange}
-            required
-            fullWidth
-            disabled={submitting || viewOnly}
-            InputProps={{ readOnly: viewOnly }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '6px',
-                '& fieldset': {
-                  borderColor: 'divider',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'primary.main',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: 'primary.main',
-                },
-              },
-            }}
-          >
-            <MenuItem value="">
-              <em>Select a suitable for</em>
-            </MenuItem>
-            {suitablefors.map((s) => (
-              <MenuItem key={s._id} value={s._id}>{s.name}</MenuItem>
-            ))}
-          </TextField>
+          <Box>
+            <FormLabel component="legend" sx={{ mb: 2, fontWeight: 600 }}>Suitable For *</FormLabel>
+            <FormGroup>
+              {suitablefors.map((s) => (
+                <FormControlLabel
+                  key={s._id}
+                  control={
+                    <Checkbox
+                      checked={isChecked(s._id)}
+                      onChange={(e) => handleCheckboxChange(s._id, e.target.checked)}
+                      disabled={submitting || viewOnly}
+                    />
+                  }
+                  label={s.name}
+                />
+              ))}
+            </FormGroup>
+          </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button 
@@ -252,7 +269,10 @@ export default function SubsuitablePage() {
   const [subsuitables, setSubsuitables] = useState<Subsuitable[]>([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<Subsuitable>({ name: '', suitablefor: '' });
+  const [form, setForm] = useState<Subsuitable>({
+    name: "",
+    suitablefor: []
+  });
   const [suitablefors, setSuitablefors] = useState<Suitablefor[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -288,14 +308,14 @@ export default function SubsuitablePage() {
 
   const handleOpen = useCallback((subsuitable: Subsuitable | null = null) => {
     setEditId(subsuitable?._id || null);
-    setForm(subsuitable ? { ...subsuitable } : { name: "", suitablefor: "" });
+    setForm(subsuitable ? { ...subsuitable } : { name: "", suitablefor: [] });
     setOpen(true);
   }, []);
 
   const handleClose = useCallback(() => {
     setOpen(false);
     setEditId(null);
-    setForm({ name: "", suitablefor: "" });
+    setForm({ name: "", suitablefor: [] });
   }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -304,10 +324,12 @@ export default function SubsuitablePage() {
     try {
       const method = editId ? "PUT" : "POST";
       const url = `${process.env.NEXT_PUBLIC_API_URL}/subsuitable${editId ? "/" + editId : ""}`;
-      // Always send only the reference ID
+      // Send array of IDs for multiple selection
       const payload = {
         ...form,
-        suitablefor: typeof form.suitablefor === 'object' ? form.suitablefor._id : form.suitablefor,
+        suitablefor: Array.isArray(form.suitablefor) 
+          ? form.suitablefor.map(sf => typeof sf === 'string' ? sf : sf._id)
+          : [],
       };
       await apiFetch(url, {
         method,
