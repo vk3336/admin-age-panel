@@ -43,8 +43,8 @@ const SubfinishRow = React.memo(({ subfinish, onEdit, onDelete, viewOnly, finish
     </TableCell>
     <TableCell>
       {typeof subfinish.finish === 'object'
-        ? subfinish.finish.name
-        : finishes.find((f: Subfinish) => f._id === subfinish.finish)?.name || 'N/A'}
+        ? subfinish.finish?.name || 'N/A'
+        : finishes?.find((f: Subfinish) => f?._id === subfinish.finish)?.name || 'N/A'}
     </TableCell>
     <TableCell>
       <Box sx={{ display: 'flex', gap: 1 }}>

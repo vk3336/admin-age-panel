@@ -28,7 +28,7 @@ interface Product {
   subsuitable: string;
   vendor: string;
   groupcode: string;
-  color: string;
+  color: string | string[];  // Can be single string or array of strings
   motif?: string;
   um?: string;
   currency?: string;
@@ -85,7 +85,7 @@ export default function ProductPage() {
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<{
+  type FormState = {
     name: string;
     category: string;
     substructure: string;
@@ -95,21 +95,24 @@ export default function ProductPage() {
     subsuitable: string;
     vendor: string;
     groupcode: string;
-    color: string;
+    colors: string[];
     motif?: string;
     um?: string;
     currency?: string;
-    gsm?: string;
-    oz?: string;
-    cm?: string;
-    inch?: string;
+    gsm?: number | string;
+    oz?: number | string;
+    cm?: number | string;
+    inch?: number | string;
     img?: File | string;
     image1?: File | string;
     image2?: File | string;
     video?: File | string;
-    quantity?: string;
-    [key: string]: string | File | undefined;
-  }>({
+    videoThumbnail?: string;
+    quantity?: number | string;
+    [key: string]: any; // Index signature to allow dynamic access
+  };
+
+  const [form, setForm] = useState<FormState>({
     name: "",
     category: "",
     substructure: "",
@@ -119,7 +122,7 @@ export default function ProductPage() {
     subsuitable: "",
     vendor: "",
     groupcode: "",
-    color: "",
+    colors: [],
     motif: "",
     um: "",
     currency: "",
@@ -127,10 +130,6 @@ export default function ProductPage() {
     oz: "",
     cm: "",
     inch: "",
-    img: undefined,
-    image1: undefined,
-    image2: undefined,
-    video: undefined,
     quantity: "",
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -138,6 +137,13 @@ export default function ProductPage() {
   const [image1Preview, setImage1Preview] = useState<string | null>(null);
   const [image2Preview, setImage2Preview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  
+  // Helper function to safely get image URL
+  const getSafeImageUrl = (img: string | undefined | null): string | null => {
+    if (!img) return null;
+    const url = getImageUrl(img);
+    return url || null;
+  };
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const image1InputRef = React.useRef<HTMLInputElement>(null);
@@ -241,61 +247,76 @@ export default function ProductPage() {
     return '';
   }, []);
 
-  const handleOpen = useCallback((product: Product | null = null) => {
-    setEditId(product?._id || null);
-    setForm(product ? {
-      name: product.name,
-      category: getId(product.category),
-      substructure: getId(product.substructure),
-      content: getId(product.content),
-      design: getId(product.design),
-      subfinish: getId(product.subfinish),
-      subsuitable: getId(product.subsuitable),
-      vendor: getId(product.vendor),
-      groupcode: getId(product.groupcode),
-      color: getId(product.color),
-      motif: getId(product.motif),
-      um: getId(product.um),
-      currency: getId(product.currency),
-      gsm: product.gsm !== undefined && product.gsm !== null ? String(product.gsm) : "",
-      oz: product.oz !== undefined && product.oz !== null ? String(product.oz) : "",
-      cm: product.cm !== undefined && product.cm !== null ? String(product.cm) : "",
-      inch: product.inch !== undefined && product.inch !== null ? String(product.inch) : "",
-      img: product.img,
-      image1: product.image1,
-      image2: product.image2,
-      video: product.video,
-      quantity: product.quantity !== undefined && product.quantity !== null ? String(product.quantity) : "",
-    } : {
-      name: "",
-      category: "",
-      substructure: "",
-      content: "",
-      design: "",
-      subfinish: "",
-      subsuitable: "",
-      vendor: "",
-      groupcode: "",
-      color: "",
-      motif: "",
-      um: "",
-      currency: "",
-      gsm: "",
-      oz: "",
-      cm: "",
-      inch: "",
-      img: undefined,
-      image1: undefined,
-      image2: undefined,
-      video: undefined,
-      quantity: "",
-    });
-    setImagePreview(product?.img ? getImageUrl(product.img) || null : null);
-    setImage1Preview(product?.image1 ? getImageUrl(product.image1) || null : null);
-    setImage2Preview(product?.image2 ? getImageUrl(product.image2) || null : null);
-    setVideoPreview(product?.video ? getImageUrl(product.video) || null : null);
+  const handleOpen = useCallback((product?: Product) => {
+    if (product) {
+      const colors = (() => {
+        if (!product.color) return [];
+        if (Array.isArray(product.color)) return product.color;
+        return [product.color].filter(Boolean);
+      })();
+      
+      setForm({
+        name: product.name,
+        category: getId(product.category),
+        substructure: getId(product.substructure),
+        content: getId(product.content),
+        design: getId(product.design),
+        subfinish: getId(product.subfinish),
+        subsuitable: getId(product.subsuitable),
+        vendor: getId(product.vendor),
+        groupcode: getId(product.groupcode),
+        colors: colors,
+        motif: getId(product.motif),
+        um: getId(product.um),
+        currency: getId(product.currency),
+        gsm: product.gsm !== undefined && product.gsm !== null ? String(product.gsm) : "",
+        oz: product.oz !== undefined && product.oz !== null ? String(product.oz) : "",
+        cm: product.cm !== undefined && product.cm !== null ? String(product.cm) : "",
+        inch: product.inch !== undefined && product.inch !== null ? String(product.inch) : "",
+        img: product.img,
+        image1: product.image1,
+        image2: product.image2,
+        video: product.video,
+        quantity: product.quantity !== undefined && product.quantity !== null ? String(product.quantity) : "",
+      });
+      setEditId(product._id || null);
+      setImagePreview(getSafeImageUrl(product.img));
+      setImage1Preview(getSafeImageUrl(product.image1));
+      setImage2Preview(getSafeImageUrl(product.image2));
+      setVideoPreview(getSafeImageUrl(product.video));
+    } else {
+      setForm({
+        name: "",
+        category: "",
+        substructure: "",
+        content: "",
+        design: "",
+        subfinish: "",
+        subsuitable: "",
+        vendor: "",
+        groupcode: "",
+        colors: [],
+        motif: "",
+        um: "",
+        currency: "",
+        gsm: "",
+        oz: "",
+        cm: "",
+        inch: "",
+        img: undefined,
+        image1: undefined,
+        image2: undefined,
+        video: undefined,
+        quantity: "",
+      });
+      setEditId(null);
+      setImagePreview(null);
+      setImage1Preview(null);
+      setImage2Preview(null);
+      setVideoPreview(null);
+    }
     setOpen(true);
-  }, [getId]);
+  }, [setForm, setEditId, setImagePreview, setImage1Preview, setImage2Preview, setVideoPreview, setOpen]);
 
   const handleClose = useCallback(() => {
     setOpen(false);
@@ -314,7 +335,7 @@ export default function ProductPage() {
       subsuitable: "",
       vendor: "",
       groupcode: "",
-      color: "",
+      colors: [],
       motif: "",
       um: "",
       currency: "",
@@ -371,7 +392,19 @@ export default function ProductPage() {
       return;
     }
     
-    const missingFields = dropdownFields.filter(f => !form[f.key] || form[f.key] === "");
+    // Check for missing required fields, excluding colors for now
+    const missingFields = dropdownFields.filter(f => {
+      // Skip color field in this check as it's handled separately
+      if (f.key === 'color') return false;
+      return !form[f.key] || form[f.key] === "";
+    });
+    
+    // Check colors separately
+    if (!form.colors || form.colors.length === 0) {
+      alert("Please select at least one color");
+      return;
+    }
+    
     if (missingFields.length > 0) {
       alert(`Please select: ${missingFields.map(f => f.label).join(", ")}`);
       return;
@@ -387,7 +420,7 @@ export default function ProductPage() {
       const formData = new FormData();
       // Append all text fields first
       Object.keys(form).forEach(key => {
-        if (!["img", "image1", "image2", "video"].includes(key) && form[key] !== undefined && form[key] !== "") {
+        if (!["img", "image1", "image2", "video", "colors"].includes(key) && form[key] !== undefined && form[key] !== "") {
           // Convert numeric fields to numbers before appending
           if (["gsm", "oz", "cm", "inch", "quantity"].includes(key)) {
             formData.append(key, String(Number(form[key])));
@@ -396,6 +429,16 @@ export default function ProductPage() {
           }
         }
       });
+      
+      // Handle colors array separately
+      if (form.colors && form.colors.length > 0) {
+        const colors = Array.isArray(form.colors) ? form.colors : [form.colors];
+        colors.forEach((colorId: string) => {
+          if (colorId) {  // Only append non-empty color IDs
+            formData.append('color[]', colorId);
+          }
+        });
+      }
       // Then append files
       if (form.img) formData.append("file", form.img as File);
       if (form.image1) formData.append("image1", form.image1 as File);
@@ -470,7 +513,7 @@ export default function ProductPage() {
         subsuitable: getId(selected.subsuitable),
         vendor: getId(selected.vendor),
         groupcode: getId(selected.groupcode),
-        color: getId(selected.color),
+        colors: Array.isArray(selected.color) ? selected.color : [selected.color].filter(Boolean),
         motif: getId(selected.motif),
         um: getId(selected.um),
         currency: getId(selected.currency),
@@ -680,11 +723,37 @@ export default function ProductPage() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={hasName(product.color) ? product.color.name : product.color || 'N/A'}
-                        size="small"
-                        sx={{ bgcolor: '#fef2f2', color: '#e74c3c', fontWeight: 500 }}
-                      />
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {Array.isArray(product.color) ? (
+                          product.color.length > 0 ? (
+                            product.color.map((color, index) => (
+                              <Chip
+                                key={index}
+                                label={hasName(color) ? color.name : typeof color === 'string' ? color : 'N/A'}
+                                size="small"
+                                sx={{ 
+                                  bgcolor: '#f0f8ff', 
+                                  color: '#2980b9', 
+                                  fontWeight: 500,
+                                  mb: 0.5
+                                }}
+                              />
+                            ))
+                          ) : (
+                            <Chip 
+                              label="No colors" 
+                              size="small" 
+                              sx={{ bgcolor: '#f5f5f5', color: '#7f8c8d' }} 
+                            />
+                          )
+                        ) : (
+                          <Chip
+                            label={hasName(product.color) ? product.color.name : product.color || 'N/A'}
+                            size="small"
+                            sx={{ bgcolor: '#f0f8ff', color: '#2980b9', fontWeight: 500 }}
+                          />
+                        )}
+                      </Box>
                     </TableCell>
                     <TableCell>
                       {product.quantity ?? '-'}
@@ -770,26 +839,80 @@ export default function ProductPage() {
               }}
             />
             
-            {dropdownFields.map((field) => (
-              <FormControl key={field.key} fullWidth required>
-                <InputLabel>{field.label}</InputLabel>
-                <Select
-                  value={form[field.key] || ""}
-                  onChange={(e) => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                  label={field.label}
-                  sx={{
-                    borderRadius: '8px',
-                  }}
-                  disabled={pageAccess === 'only view'}
-                >
-                  {dropdowns[field.key]?.map((option: Option, index: number) => (
-                    <MenuItem key={`${field.key}-${option._id}-${index}`} value={option._id}>
-                      {option.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            ))}
+            {dropdownFields.map((field) => {
+              if (field.key === 'color') {
+                return (
+                  <Autocomplete
+                    key="colors"
+                    multiple
+                    options={dropdowns.color || []}
+                    getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+                    value={form.colors.map(colorId => 
+                      (dropdowns.color || []).find(c => c._id === colorId) || colorId
+                    ).filter(Boolean)}
+                    onChange={(_, newValue) => {
+                      setForm(prev => ({
+                        ...prev,
+                        colors: newValue.map(item => typeof item === 'string' ? item : item._id)
+                      }));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        variant="outlined"
+                        label="Colors"
+                        placeholder="Search and select colors..."
+                        sx={{
+                          borderRadius: '8px',
+                        }}
+                      />
+                    )}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => (
+                        <Chip
+                          {...getTagProps({ index })}
+                          key={typeof option === 'string' ? option : option._id}
+                          label={typeof option === 'string' ? option : option.name}
+                          size="small"
+                          sx={{ 
+                            m: 0.5,
+                            bgcolor: '#f0f0f0',
+                            '& .MuiChip-deleteIcon': {
+                              color: '#666',
+                              '&:hover': {
+                                color: '#333',
+                              },
+                            },
+                          }}
+                        />
+                      ))
+                    }
+                    disabled={pageAccess === 'only view'}
+                  />
+                );
+              }
+              
+              return (
+                <FormControl key={field.key} fullWidth required>
+                  <InputLabel>{field.label}</InputLabel>
+                  <Select
+                    value={form[field.key] || ""}
+                    onChange={(e) => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    label={field.label}
+                    sx={{
+                      borderRadius: '8px',
+                    }}
+                    disabled={pageAccess === 'only view'}
+                  >
+                    {dropdowns[field.key]?.map((option: Option, index: number) => (
+                      <MenuItem key={`${field.key}-${option._id}-${index}`} value={option._id}>
+                        {option.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              );
+            })}
             
             <FormControl fullWidth required>
               <InputLabel>UM</InputLabel>
@@ -1154,7 +1277,7 @@ export default function ProductPage() {
               </Box>
               {/* Details grid */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
-                {dropdownFields.filter(field => field.key !== 'motif').map((field) => {
+                {dropdownFields.filter(field => field.key !== 'motif' && field.key !== 'color').map((field) => {
                   const value = (selectedProduct as unknown as Record<string, unknown>)[field.key];
                   return (
                     <Box key={field.key}>
@@ -1171,6 +1294,39 @@ export default function ProductPage() {
                     </Box>
                   );
                 })}
+                {/* Color field with multiple values */}
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Colors
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                    {Array.isArray(selectedProduct.color) ? (
+                      selectedProduct.color.length > 0 ? (
+                        selectedProduct.color.map((color, index) => (
+                          <Chip
+                            key={index}
+                            label={hasName(color) ? color.name : typeof color === 'string' ? color : 'N/A'}
+                            size="small"
+                            sx={{ 
+                              bgcolor: '#f0f8ff', 
+                              color: '#2980b9', 
+                              fontWeight: 500,
+                              mb: 0.5
+                            }}
+                          />
+                        ))
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#2c3e50' }}>-</Typography>
+                      )
+                    ) : (
+                      <Typography variant="body2" sx={{ color: '#2c3e50' }}>
+                        {hasName(selectedProduct.color) 
+                          ? selectedProduct.color.name 
+                          : selectedProduct.color || '-'}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
                 {/* Motif and new fields */}
                 <Box>
                   <Typography variant="caption" sx={{ color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 600 }}>Motif</Typography>

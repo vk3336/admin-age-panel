@@ -48,8 +48,8 @@ const SubstructureRow = React.memo(({ substructure, onEdit, onDelete, viewOnly, 
     </TableCell>
     <TableCell>
       {typeof substructure.structure === 'object'
-        ? substructure.structure.name
-        : structures.find((s: Structure) => s._id === substructure.structure)?.name || 'N/A'}
+        ? substructure.structure?.name || 'N/A'
+        : structures?.find((s: Structure) => s?._id === substructure.structure)?.name || 'N/A'}
     </TableCell>
     <TableCell>
       <Box sx={{ display: 'flex', gap: 1 }}>
