@@ -6,7 +6,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
 import { apiFetch } from '../../utils/apiFetch';
-import { AdminRole } from '../types';
+// Removed unused AdminRole import
 
 export default function LoginPage() {
   const [step, setStep] = useState<1 | 2>(1);
@@ -21,30 +21,12 @@ export default function LoginPage() {
     setYear(new Date().getFullYear());
   }, []);
 
-  const setAuthCookie = () => {
+  const setAuthCookie = (isSuperAdmin: boolean, permissions: Record<string, boolean>) => {
     document.cookie = "admin-auth=true; path=/; max-age=86400";
     localStorage.setItem("admin-auth", "true");
     localStorage.setItem("admin-email", email.trim());
-  };
-
-  const fetchRoleByEmail = async (email: string): Promise<AdminRole | null> => {
-    try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/roles`);
-      if (!res.ok) {
-        console.error('Failed to fetch roles:', res.status, res.statusText);
-        return null;
-      }
-      const data = await res.json();
-      if (!Array.isArray(data)) {
-        console.error('Roles data is not an array:', data);
-        return null;
-      }
-      return data.find((role: AdminRole) => role.email.toLowerCase() === email.toLowerCase()) || null;
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error('Error fetching role by email:', message);
-      return null;
-    }
+    localStorage.setItem("is-super-admin", String(isSuperAdmin));
+    localStorage.setItem("permissions", JSON.stringify(permissions));
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -58,15 +40,6 @@ export default function LoginPage() {
     setError("");
     
     try {
-      const role = await fetchRoleByEmail(email.trim());
-      const isSuperAdmin = email.trim().toLowerCase() === process.env.NEXT_PUBLIC_Role_Management_Key_Value?.toLowerCase();
-
-      if (!role && !isSuperAdmin) {
-        setError("This email is not authorized. Please contact your administrator.");
-        setLoading(false);
-        return;
-      }
-
       const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/sendotp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,51 +76,20 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), otp: otp.trim() }),
-        credentials: "include",
       });
+      
       const data = await res.json();
       
       if (res.ok && data.success) {
-        setAuthCookie();
+        const { isSuperAdmin, permissions } = data.data;
+        setAuthCookie(isSuperAdmin, permissions);
         
-        const role = await fetchRoleByEmail(email.trim());
-        if (role) {
-          localStorage.setItem('admin-permissions', JSON.stringify({
-            ...role, // Store all permissions from the role
-            name: role.name,
-            email: role.email,
-          }));
-        } else {
-          // Fallback for super admin if not in roles DB
-          const superAdminEmail = process.env.NEXT_PUBLIC_Role_Management_Key_Value;
-          if (email.trim().toLowerCase() === superAdminEmail?.toLowerCase()) {
-            localStorage.setItem('admin-permissions', JSON.stringify({
-              filter: 'all access',
-              product: 'all access',
-              seo: 'all access',
-              category: 'all access',
-              color: 'all access',
-              content: 'all access',
-              design: 'all access',
-              finish: 'all access',
-              groupcode: 'all access',
-              motif: 'all access',
-              structure: 'all access',
-              subfinish: 'all access',
-              substructure: 'all access',
-              subsuitable: 'all access',
-              suitablefor: 'all access',
-              vendor: 'all access',
-              name: 'Super Admin',
-              email: superAdminEmail,
-            }));
-          } else {
-            console.error("Logged in user has no role defined and is not super admin.");
-            setError("Your user has no permissions configured. Please contact an administrator.");
-            setLoading(false);
-            return;
-          }
-        }
+        // Store permissions in localStorage
+        localStorage.setItem('admin-permissions', JSON.stringify({
+          ...permissions,
+          name: data.data.name || 'Admin User',
+          email: email.trim()
+        }));
         
         router.push("/dashboard");
       } else {

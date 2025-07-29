@@ -85,7 +85,7 @@ export default function ProductPage() {
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
-  type FormState = {
+  interface FormState {
     name: string;
     category: string;
     substructure: string;
@@ -109,7 +109,7 @@ export default function ProductPage() {
     video?: File | string;
     videoThumbnail?: string;
     quantity?: number | string;
-    [key: string]: any; // Index signature to allow dynamic access
+    [key: string]: string | number | boolean | File | string[] | null | undefined;
   };
 
   const [form, setForm] = useState<FormState>({
@@ -316,7 +316,7 @@ export default function ProductPage() {
       setVideoPreview(null);
     }
     setOpen(true);
-  }, [setForm, setEditId, setImagePreview, setImage1Preview, setImage2Preview, setVideoPreview, setOpen]);
+  }, [setForm, setEditId, setImagePreview, setImage1Preview, setImage2Preview, setVideoPreview, setOpen, getId]);
 
   const handleClose = useCallback(() => {
     setOpen(false);

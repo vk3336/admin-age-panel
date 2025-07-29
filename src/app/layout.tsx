@@ -328,6 +328,8 @@ const Sidebar = React.memo(() => {
             )}
           </ListItemButton>
 
+          
+
           {/* SEO */}
           <ListItemButton 
             component={NextLink} 
@@ -364,6 +366,52 @@ const Sidebar = React.memo(() => {
             {!isCollapsed && (
               <ListItemText 
                 primary="SEO" 
+                sx={{ 
+                  '& .MuiTypography-root': { 
+                    fontSize: '14px',
+                    fontWeight: 500
+                  } 
+                }} 
+              />
+            )}
+          </ListItemButton>
+
+          {/* Static SEO */}
+          <ListItemButton 
+            component={NextLink} 
+            href="/static-seo" 
+            sx={{
+              borderRadius: '6px',
+              mb: 1,
+              py: 1.5,
+              px: isCollapsed ? 0 : 2,
+              transition: 'all 0.3s ease',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              minHeight: 48,
+              ...(pathname === '/static-seo' && {
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                }
+              }),
+              '&:hover': {
+                backgroundColor: pathname === '/static-seo' ? 'primary.dark' : 'action.hover',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ 
+              color: pathname === '/static-seo' ? 'white' : 'text.secondary', 
+              minWidth: 0, 
+              mr: isCollapsed ? 0 : 2,
+              justifyContent: 'center',
+              display: 'flex'
+            }}>
+              <SearchIcon fontSize="small" />
+            </ListItemIcon>
+            {!isCollapsed && (
+              <ListItemText 
+                primary="Static SEO" 
                 sx={{ 
                   '& .MuiTypography-root': { 
                     fontSize: '14px',
