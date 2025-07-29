@@ -17,6 +17,7 @@ import { apiFetch } from '../../utils/apiFetch';
 interface Product {
   _id?: string;
   name: string;
+  slug?: string;
   img?: string;
   image1?: string;
   image2?: string;
@@ -114,6 +115,7 @@ export default function ProductPage() {
 
   const [form, setForm] = useState<FormState>({
     name: "",
+    slug: "",
     category: "",
     substructure: "",
     content: "",
@@ -247,16 +249,35 @@ export default function ProductPage() {
     return '';
   }, []);
 
+  // Define the shape of a color object for type safety
+  interface ColorObject {
+    _id: string;
+    name?: string;
+  }
+
   const handleOpen = useCallback((product?: Product) => {
     if (product) {
-      const colors = (() => {
-        if (!product.color) return [];
-        if (Array.isArray(product.color)) return product.color;
-        return [product.color].filter(Boolean);
-      })();
+      // Handle colors - ensure we always have an array of color IDs
+      let colors: string[] = [];
+      if (product.color) {
+        if (Array.isArray(product.color)) {
+          colors = product.color
+            .map(c => {
+              if (!c) return '';
+              if (typeof c === 'string') return c;
+              return (c as ColorObject)._id || '';
+            })
+            .filter(Boolean) as string[];
+        } else if (typeof product.color === 'string') {
+          colors = [product.color];
+        } else if ('_id' in product.color) {
+          colors = [(product.color as ColorObject)._id];
+        }
+      }
       
       setForm({
         name: product.name,
+        slug: product.slug || '',
         category: getId(product.category),
         substructure: getId(product.substructure),
         content: getId(product.content),
@@ -496,6 +517,13 @@ export default function ProductPage() {
   }, [filteredProducts, page]);
 
   // Add this handler for product selection
+  // Define the shape of a color object
+  interface ColorObject {
+    _id: string;
+    name?: string;
+    // Add other color properties if they exist
+  }
+
   const handleProductSelect = useCallback((
     _: React.SyntheticEvent,
     value: { label?: string; value?: string } | null
@@ -503,8 +531,23 @@ export default function ProductPage() {
     if (!value) return;
     const selected = products.find(p => p._id === value.value);
     if (selected) {
+      // Handle colors - ensure we always have an array of color IDs
+      let colors: string[] = [];
+      if (selected.color) {
+        if (Array.isArray(selected.color)) {
+          colors = selected.color.map(c => 
+            typeof c === 'string' ? c : (c && '_id' in c ? (c as ColorObject)._id : '')
+          ).filter(Boolean) as string[];
+        } else if (typeof selected.color === 'string') {
+          colors = [selected.color];
+        } else if (selected.color && '_id' in selected.color) {
+          colors = [(selected.color as ColorObject)._id];
+        }
+      }
+
       setForm({
         name: selected.name,
+        slug: selected.slug || '',
         category: getId(selected.category),
         substructure: getId(selected.substructure),
         content: getId(selected.content),
@@ -513,7 +556,7 @@ export default function ProductPage() {
         subsuitable: getId(selected.subsuitable),
         vendor: getId(selected.vendor),
         groupcode: getId(selected.groupcode),
-        colors: Array.isArray(selected.color) ? selected.color : [selected.color].filter(Boolean),
+        colors: colors,
         motif: getId(selected.motif),
         um: getId(selected.um),
         currency: getId(selected.currency),
@@ -673,6 +716,9 @@ export default function ProductPage() {
                     Product
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#2c3e50', fontSize: '14px' }}>
+                    Slug
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#2c3e50', fontSize: '14px' }}>
                     Category
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#2c3e50', fontSize: '14px' }}>
@@ -708,6 +754,11 @@ export default function ProductPage() {
                             ID: {product._id}
                           </Typography>
                         </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {product.slug || 'N/A'}
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -838,6 +889,26 @@ export default function ProductPage() {
                 }
               }}
             />
+            <TextField
+              label="Slug (URL-friendly name)"
+              value={form.slug || ''}
+              onChange={(e) => setForm(prev => ({ ...prev, slug: e.target.value }))}
+              fullWidth
+              helperText="Leave empty to auto-generate from product name"
+              InputProps={{ 
+                readOnly: pageAccess === 'only view',
+                inputProps: { 
+                  pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$',
+                  title: 'Use only lowercase letters, numbers, and hyphens. No spaces or special characters.'
+                } 
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                },
+                mt: 2
+              }}
+            />
             
             {dropdownFields.map((field) => {
               if (field.key === 'color') {
@@ -846,14 +917,35 @@ export default function ProductPage() {
                     key="colors"
                     multiple
                     options={dropdowns.color || []}
-                    getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
-                    value={form.colors.map(colorId => 
-                      (dropdowns.color || []).find(c => c._id === colorId) || colorId
-                    ).filter(Boolean)}
+                    getOptionLabel={(option) => {
+                      if (!option) return '';
+                      if (typeof option === 'string') return option;
+                      return option.name || option._id || '';
+                    }}
+                    isOptionEqualToValue={(option, value) => {
+                      if (!option || !value) return false;
+                      const optionId = typeof option === 'string' ? option : option._id;
+                      const valueId = typeof value === 'string' ? value : value._id;
+                      return optionId === valueId;
+                    }}
+                    value={form.colors
+                      .map(colorId => {
+                        if (!colorId) return null;
+                        // Find the color in dropdowns or return the ID as is
+                        const found = (dropdowns.color || []).find(c => c._id === colorId);
+                        return found || colorId;
+                      })
+                      .filter(Boolean)
+                    }
                     onChange={(_, newValue) => {
+                      const selectedColors = newValue.map(item => {
+                        if (!item) return '';
+                        return typeof item === 'string' ? item : (item._id || '');
+                      }).filter(Boolean);
+                      
                       setForm(prev => ({
                         ...prev,
-                        colors: newValue.map(item => typeof item === 'string' ? item : item._id)
+                        colors: selectedColors
                       }));
                     }}
                     renderInput={(params) => (
@@ -868,25 +960,29 @@ export default function ProductPage() {
                       />
                     )}
                     renderTags={(value, getTagProps) =>
-                      value.map((option, index) => (
-                        <Chip
-                          {...getTagProps({ index })}
-                          key={typeof option === 'string' ? option : option._id}
-                          label={typeof option === 'string' ? option : option.name}
-                          size="small"
-                          sx={{ 
-                            m: 0.5,
-                            bgcolor: '#f0f0f0',
-                            '& .MuiChip-deleteIcon': {
-                              color: '#666',
-                              '&:hover': {
-                                color: '#333',
+                      value.map((option, index) => {
+                        if (!option) return null;
+                        const optionId = typeof option === 'string' ? option : (option._id || '');
+                        const optionLabel = typeof option === 'string' ? option : (option.name || option._id || '');
+                        return (
+                          <Chip
+                            {...getTagProps({ index })}
+                            key={optionId}
+                            label={optionLabel}
+                            size="small"
+                            sx={{ 
+                              m: 0.5,
+                              bgcolor: '#f0f0f0',
+                              '& .MuiChip-deleteIcon': {
+                                color: '#666',
+                                '&:hover': {
+                                  color: '#333',
+                                },
                               },
-                            },
-                          }}
-                        />
-                      ))
-                    }
+                            }}
+                          />
+                        );
+                      })}
                     disabled={pageAccess === 'only view'}
                   />
                 );
