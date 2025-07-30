@@ -18,6 +18,7 @@ interface Product {
   _id?: string;
   name: string;
   slug?: string;
+  productdescription?: string;
   img?: string;
   image1?: string;
   image2?: string;
@@ -88,6 +89,8 @@ export default function ProductPage() {
   const [editId, setEditId] = useState<string | null>(null);
   interface FormState {
     name: string;
+    slug?: string;
+    productdescription?: string;
     category: string;
     substructure: string;
     content: string;
@@ -116,6 +119,7 @@ export default function ProductPage() {
   const [form, setForm] = useState<FormState>({
     name: "",
     slug: "",
+    productdescription: "",
     category: "",
     substructure: "",
     content: "",
@@ -278,6 +282,7 @@ export default function ProductPage() {
       setForm({
         name: product.name,
         slug: product.slug || '',
+        productdescription: product.productdescription || '',
         category: getId(product.category),
         substructure: getId(product.substructure),
         content: getId(product.content),
@@ -548,6 +553,7 @@ export default function ProductPage() {
       setForm({
         name: selected.name,
         slug: selected.slug || '',
+        productdescription: selected.productdescription || '',
         category: getId(selected.category),
         substructure: getId(selected.substructure),
         content: getId(selected.content),
@@ -777,19 +783,22 @@ export default function ProductPage() {
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                         {Array.isArray(product.color) ? (
                           product.color.length > 0 ? (
-                            product.color.map((color, index) => (
-                              <Chip
-                                key={index}
-                                label={hasName(color) ? color.name : typeof color === 'string' ? color : 'N/A'}
-                                size="small"
-                                sx={{ 
-                                  bgcolor: '#f0f8ff', 
-                                  color: '#2980b9', 
-                                  fontWeight: 500,
-                                  mb: 0.5
-                                }}
-                              />
-                            ))
+                            product.color.map((color, index) => {
+                              const colorLabel = hasName(color) ? color.name : typeof color === 'string' ? color : 'N/A';
+                              return (
+                                <Chip
+                                  key={`${colorLabel}-${index}`}
+                                  label={colorLabel}
+                                  size="small"
+                                  sx={{ 
+                                    bgcolor: '#f0f8ff', 
+                                    color: '#2980b9', 
+                                    fontWeight: 500,
+                                    mb: 0.5
+                                  }}
+                                />
+                              );
+                            })
                           ) : (
                             <Chip 
                               label="No colors" 
@@ -897,16 +906,41 @@ export default function ProductPage() {
               helperText="Leave empty to auto-generate from product name"
               InputProps={{ 
                 readOnly: pageAccess === 'only view',
-                inputProps: { 
-                  pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$',
-                  title: 'Use only lowercase letters, numbers, and hyphens. No spaces or special characters.'
-                } 
+              }}
+              inputProps={{
+                style: { 
+                  textTransform: 'lowercase',
+                },
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '8px',
                 },
-                mt: 2
+                '& .MuiInputBase-input::placeholder': {
+                  textTransform: 'none',
+                  opacity: 1,
+                }
+              }}
+            />
+            <TextField
+              label="Product Description"
+              value={form.productdescription || ''}
+              onChange={(e) => setForm(prev => ({ ...prev, productdescription: e.target.value }))}
+              fullWidth
+              multiline
+              rows={3}
+              InputProps={{ 
+                readOnly: pageAccess === 'only view',
+                inputProps: { 
+                  style: { 
+                    minHeight: '80px'
+                  }
+                } 
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                }
               }}
             />
             
@@ -1362,14 +1396,27 @@ export default function ProductPage() {
                   )}
                 </Box>
               </Box>
-              {/* Product name and ID above details grid */}
+              {/* Product name, ID and description above details grid */}
               <Box sx={{ textAlign: 'center', mt: 2 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50', mb: 1 }}>
                   {selectedProduct.name}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#7f8c8d', mb: 2 }}>
+                <Typography variant="body2" sx={{ color: '#7f8c8d', mb: 1 }}>
                   ID: {selectedProduct._id}
                 </Typography>
+                {selectedProduct.productdescription && (
+                  <Typography variant="body1" sx={{ 
+                    color: '#2c3e50', 
+                    mt: 2, 
+                    p: 2, 
+                    bgcolor: '#f8f9fa', 
+                    borderRadius: '8px',
+                    textAlign: 'left',
+                    whiteSpace: 'pre-line'
+                  }}>
+                    {selectedProduct.productdescription}
+                  </Typography>
+                )}
               </Box>
               {/* Details grid */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
@@ -1398,19 +1445,22 @@ export default function ProductPage() {
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
                     {Array.isArray(selectedProduct.color) ? (
                       selectedProduct.color.length > 0 ? (
-                        selectedProduct.color.map((color, index) => (
-                          <Chip
-                            key={index}
-                            label={hasName(color) ? color.name : typeof color === 'string' ? color : 'N/A'}
-                            size="small"
-                            sx={{ 
-                              bgcolor: '#f0f8ff', 
-                              color: '#2980b9', 
-                              fontWeight: 500,
-                              mb: 0.5
-                            }}
-                          />
-                        ))
+                        selectedProduct.color.map((color, index) => {
+                          const colorLabel = hasName(color) ? color.name : typeof color === 'string' ? color : 'N/A';
+                          return (
+                            <Chip
+                              key={`${colorLabel}-${index}`}
+                              label={colorLabel}
+                              size="small"
+                              sx={{ 
+                                bgcolor: '#f0f8ff', 
+                                color: '#2980b9', 
+                                fontWeight: 500,
+                                mb: 0.5
+                              }}
+                            />
+                          );
+                        })
                       ) : (
                         <Typography variant="body2" sx={{ color: '#2c3e50' }}>-</Typography>
                       )
