@@ -436,11 +436,6 @@ export default function ProductPage() {
       return;
     }
     
-    if (!editId && (!form.img || !(form.img instanceof File))) {
-      alert("Please select an image for the product");
-      return;
-    }
-    
     setSubmitting(true);
     try {
       const formData = new FormData();
@@ -1552,4 +1547,4 @@ export default function ProductPage() {
       </Dialog>
     </Box>
   );
-} 
+}
