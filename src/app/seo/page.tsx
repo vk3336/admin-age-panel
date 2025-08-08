@@ -99,12 +99,6 @@ interface Product {
 }
 
 // Type guards for dynamic property access
-function hasName(obj: unknown): obj is { name: string } {
-  return Boolean(obj && typeof obj === 'object' && 'name' in obj && typeof (obj as { name?: unknown }).name === 'string');
-}
-function hasImg(obj: unknown): obj is { img: string } {
-  return Boolean(obj && typeof obj === 'object' && 'img' in obj && typeof (obj as { img?: unknown }).img === 'string');
-}
 
 function SeoPage() {
   const [seoList, setSeoList] = useState<Record<string, unknown>[]>([]);
@@ -262,12 +256,6 @@ function SeoPage() {
   };
 
   // Helper to get product image URL
-  function getProductImageUrl(product: { img?: string } | undefined): string | undefined {
-    if (!product) return undefined;
-    if (product.img && (product.img.startsWith('http://') || product.img.startsWith('https://'))) return product.img;
-    if (product.img) return `${API_URL}/images/${product.img}`;
-    return undefined;
-  }
 
   // Render
   if (pageAccess === 'no access') {
