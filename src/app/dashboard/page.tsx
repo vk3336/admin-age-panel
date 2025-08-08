@@ -281,6 +281,7 @@ export default function DashboardPage() {
   const [counts, setCounts] = useState<{ [key: string]: number }>({});
   const [productCount, setProductCount] = useState<number>(0);
   const [seoCount, setSeoCount] = useState<number>(0);
+  const [staticSeoCount, setStaticSeoCount] = useState<number>(0);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -319,7 +320,8 @@ export default function DashboardPage() {
           subsuitablesRes,
           suitableforsRes,
           vendorsRes,
-          seoRes
+          seoRes,
+          staticSeoRes
         ] = await Promise.all([
           apiFetch(`${base}/product`),
           apiFetch(`${base}/category`),
@@ -334,7 +336,8 @@ export default function DashboardPage() {
           apiFetch(`${base}/subsuitable`),
           apiFetch(`${base}/suitablefor`),
           apiFetch(`${base}/vendor`),
-          apiFetch(`${base}/seo`)
+          apiFetch(`${base}/seo`),
+          apiFetch(`${base}/static-seo`)
         ]);
         const results = await Promise.all([
           productsRes.json(),
@@ -350,7 +353,8 @@ export default function DashboardPage() {
           subsuitablesRes.json(),
           suitableforsRes.json(),
           vendorsRes.json(),
-          seoRes.json()
+          seoRes.json(),
+          staticSeoRes.json()
         ]);
         const newCounts: { [key: string]: number } = {};
         newCounts['product'] = Array.isArray(results[0].data) ? results[0].data.length : 0;
@@ -366,9 +370,11 @@ export default function DashboardPage() {
         newCounts['subsuitable'] = Array.isArray(results[10].data) ? results[10].data.length : 0;
         newCounts['suitablefor'] = Array.isArray(results[11].data) ? results[11].data.length : 0;
         newCounts['vendor'] = Array.isArray(results[12].data) ? results[12].data.length : 0;
-        setCounts(newCounts);
-        setProductCount(Array.isArray(results[0].data) ? results[0].data.length : 0);
-        setSeoCount(Array.isArray(results[13].data) ? results[13].data.length : 0);
+  newCounts['staticseo'] = typeof results[14].count === 'number' ? results[14].count : (Array.isArray(results[14].data) ? results[14].data.length : 0);
+  setCounts(newCounts);
+  setProductCount(Array.isArray(results[0].data) ? results[0].data.length : 0);
+  setSeoCount(Array.isArray(results[13].data) ? results[13].data.length : 0);
+  setStaticSeoCount(typeof results[14].count === 'number' ? results[14].count : (Array.isArray(results[14].data) ? results[14].data.length : 0));
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -418,6 +424,14 @@ export default function DashboardPage() {
       icon: <InventoryIcon />,
       color: '#00cfe8',
       href: '/seo',
+    },
+    {
+      title: 'StaticSEO',
+      value: staticSeoCount,
+      subtitle: 'StaticSEO Entries',
+      icon: <InventoryIcon />,
+      color: '#ffb300',
+      href: '/staticseo',
     },
     ...[
       { key: 'category', label: 'Categories', icon: <CategoryIcon />, color: '#7367f0' },

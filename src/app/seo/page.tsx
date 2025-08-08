@@ -392,13 +392,25 @@ function SeoPage() {
                 <TableRow key={typeof seo._id === 'string' ? seo._id : ''} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Avatar
-                        src={hasImg(seo.product) ? (seo.product.img.startsWith('http') ? seo.product.img : `${API_URL}/images/${seo.product.img}`) : undefined}
-                        sx={{ width: 32, height: 32, mr: 1 }}
-                      >
-                        {hasName(seo.product) ? seo.product.name[0] : '-'}
-                      </Avatar>
-                      {hasName(seo.product) ? seo.product.name : "-"}
+                      {(() => {
+                        let productObj: Product | undefined;
+                        if (seo.product && typeof seo.product === 'string') {
+                          productObj = products.find(p => p._id === seo.product);
+                        } else if (seo.product && typeof seo.product === 'object' && '_id' in seo.product) {
+                          productObj = seo.product as Product;
+                        }
+                        return (
+                          <>
+                            <Avatar
+                              src={productObj && productObj.img ? (productObj.img.startsWith('http') ? productObj.img : `${API_URL}/images/${productObj.img}`) : undefined}
+                              sx={{ width: 32, height: 32, mr: 1 }}
+                            >
+                              {productObj && productObj.name ? productObj.name[0] : '-'}
+                            </Avatar>
+                            {productObj && productObj.name ? productObj.name : "-"}
+                          </>
+                        );
+                      })()}
                     </Box>
                   </TableCell>
                   <TableCell>{typeof seo.slug === 'string' ? seo.slug : '-'}</TableCell>
@@ -542,23 +554,33 @@ function SeoPage() {
           {selectedSeo && (
             <Box>
               {/* Product Info at the top */}
-              <Box display="flex" alignItems="center" gap={3} mb={4}>
-                <Avatar
-                  variant="rounded"
-                  src={hasImg(selectedSeo.product) ? getProductImageUrl(selectedSeo.product as { img?: string }) : undefined}
-                  sx={{ width: 100, height: 100, mr: 2 }}
-                >
-                  {hasName(selectedSeo.product) ? selectedSeo.product.name[0] : "-"}
-                </Avatar>
-                <Box>
-                  <Typography variant="h5" fontWeight={700} color="primary">
-                    {hasName(selectedSeo.product) ? selectedSeo.product.name : "-"}
-                  </Typography>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    Product
-                  </Typography>
-                </Box>
-              </Box>
+              {(() => {
+                let productObj: Product | undefined;
+                if (selectedSeo.product && typeof selectedSeo.product === 'string') {
+                  productObj = products.find(p => p._id === selectedSeo.product);
+                } else if (selectedSeo.product && typeof selectedSeo.product === 'object' && '_id' in selectedSeo.product) {
+                  productObj = selectedSeo.product as Product;
+                }
+                return (
+                  <Box display="flex" alignItems="center" gap={3} mb={4}>
+                    <Avatar
+                      variant="rounded"
+                      src={productObj && productObj.img ? (productObj.img.startsWith('http') ? productObj.img : `${API_URL}/images/${productObj.img}`) : undefined}
+                      sx={{ width: 100, height: 100, mr: 2 }}
+                    >
+                      {productObj && productObj.name ? productObj.name[0] : "-"}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h5" fontWeight={700} color="primary">
+                        {productObj && productObj.name ? productObj.name : "-"}
+                      </Typography>
+                      <Typography variant="subtitle2" color="textSecondary">
+                        Product
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              })()}
               {/* Group fields by section for display */}
               {(() => {
                 let currentSection: string | null = null;
@@ -581,10 +603,20 @@ function SeoPage() {
                     }
                     currentSection = field.section;
                   } else if (field.key) {
-                    // Support nested fields for view
-                    const value = typeof field.key === 'string'
-                      ? field.key.split('.').reduce((acc: unknown, k: string) => (acc && typeof acc === 'object' && k in acc) ? (acc as Record<string, unknown>)[k] : undefined, selectedSeo) ?? "-"
-                      : "-";
+                    // Show product name instead of product ID
+                    let value: unknown = "-";
+                    if (field.key === "product") {
+                      if (selectedSeo.product && typeof selectedSeo.product === "string") {
+                        const prod = products.find(p => p._id === selectedSeo.product);
+                        value = prod ? prod.name : "-";
+                      } else if (selectedSeo.product && typeof selectedSeo.product === "object" && 'name' in selectedSeo.product) {
+                        value = (selectedSeo.product as { name?: string }).name || "-";
+                      }
+                    } else {
+                      value = typeof field.key === 'string'
+                        ? field.key.split('.').reduce((acc: unknown, k: string) => (acc && typeof acc === 'object' && k in acc) ? (acc as Record<string, unknown>)[k] : undefined, selectedSeo) ?? "-"
+                        : "-";
+                    }
                     sectionFields.push(
                       <Box key={field.key} minWidth={180}>
                         <Typography variant="subtitle2" color="textSecondary" fontWeight={600}>{field.label}</Typography>
@@ -593,11 +625,9 @@ function SeoPage() {
                             ? (value ? "Yes" : "No")
                             : Array.isArray(value)
                               ? value.join(", ")
-                              : (typeof value === "object" && value !== null)
-                                ? (hasName(value) ? value.name : JSON.stringify(value))
-                                : typeof value === "string" || typeof value === "number"
-                                  ? value
-                                  : String(value)}
+                              : (typeof value === "string" || typeof value === "number")
+                                ? value
+                                : String(value)}
                         </Typography>
                       </Box>
                     );
