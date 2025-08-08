@@ -749,7 +749,7 @@ export default function ProductPage() {
                         </Avatar>
                         <Box>
                           <Typography variant="body2" sx={{ fontWeight: 600, color: '#2c3e50' }}>
-                            {product.name}
+                            <span dangerouslySetInnerHTML={{ __html: product.name }} />
                           </Typography>
                           <Typography variant="caption" sx={{ color: '#7f8c8d' }}>
                             ID: {product._id}
@@ -1394,7 +1394,7 @@ export default function ProductPage() {
               {/* Product name, ID and description above details grid */}
               <Box sx={{ textAlign: 'center', mt: 2 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50', mb: 1 }}>
-                  {selectedProduct.name}
+                  <span dangerouslySetInnerHTML={{ __html: selectedProduct.name }} />
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#7f8c8d', mb: 1 }}>
                   ID: {selectedProduct._id}
@@ -1409,7 +1409,7 @@ export default function ProductPage() {
                     textAlign: 'left',
                     whiteSpace: 'pre-line'
                   }}>
-                    {selectedProduct.productdescription}
+                    <span dangerouslySetInnerHTML={{ __html: selectedProduct.productdescription }} />
                   </Typography>
                 )}
               </Box>
